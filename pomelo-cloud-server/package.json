@@ -1,6 +1,6 @@
 {
-  "name": "PomeloCloud",
-  "version": "0.1.0",
+  "name": "pomelo-cloud-server",
+  "version": "1.0.0",
   "description": "柚子云 - 自定义个人建站面板",
   "main": "main.js",
   "scripts": {
