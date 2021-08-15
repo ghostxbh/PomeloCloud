@@ -1,9 +1,18 @@
 # Created by .ignore support plugin (hsz.mobi)
 # IntelliJ project files
+.DS_Store
 .idea
 *.iml
 out
 gen
+
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
+dist/
 
 ### Node template
 # Logs
@@ -12,7 +21,8 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
+**/*.log
 
 node_modules
 package-lock.json
+yarn.lock
