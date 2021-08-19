@@ -10,7 +10,7 @@
  * # |                           Team: uzykj.com                              | #
  * ##############################################################################
  */
-var debug = require('debug')('PomeloCloud:server');
+var debug = require('debug')('pomelo-cloud-server:server');
 var http = require('http');
 var app = require('./app');
 var fs = require('fs');
