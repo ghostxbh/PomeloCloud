@@ -7,7 +7,7 @@
 ## 安装
 ### CentOS
 ```shell script
-yum install -y wget && wget -O install.sh http://download.pomelo.work/environment/install_1.0.sh && sh install.sh
+yum install -y wget && wget -O install.sh http://pomelo.work/environment/install_1.0.sh && sh install.sh
 ```
 
 ### Ubuntu/Debian
