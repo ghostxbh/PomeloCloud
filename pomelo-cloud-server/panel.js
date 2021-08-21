@@ -4,17 +4,17 @@
  * # |                              柚子云面板                                  | #
  * ##############################################################################
  * # |                                                                        | #
- * # | Copyright (c) 2021-2099 柚子云(http://pomelo.work) All rights reserved. | #
+ * # | Copyright (c) 2020-2021 柚子云(http://pomelo.work) All rights reserved. | #
  * # |                                                                        | #
  * ##############################################################################
- * # |                           Team: uzykj.com                              | #
+ * # |                           Author: ghostxbh                             | #
  * ##############################################################################
  */
 var debug = require('debug')('pomelo-cloud-server:server');
 var http = require('http');
 var app = require('./app');
 var fs = require('fs');
-var PORT = fs.readFileSync('./config/port.pl');
+var PORT = fs.readFileSync('../config/server-port.pl');
 var port = normalizePort(process.env.PORT || PORT);
 app.set('port', port);
 
