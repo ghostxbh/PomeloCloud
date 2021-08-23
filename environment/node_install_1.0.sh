@@ -3,13 +3,13 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 ##############################################################################
-# |                            环境下载脚本                                  | #
+# |                          Nodejs环境下载脚本                              | #
 ##############################################################################
 # |                                                                        | #
-# | Copyright (c) 2021-2099 柚子云(http://pomelo.work) All rights reserved. | #
+# | Copyright (c) 2020-2021 柚子云(http://pomelo.work) All rights reserved. | #
 # |                                                                        | #
 ##############################################################################
-# |                           Team: uzykj.com                              | #
+# |                          author: ghostxbh                              | #
 ##############################################################################
 hasNetwork=0
 
@@ -40,8 +40,6 @@ nodeTarxz=node-v14.17.3-linux-x64.tar.xz
 nodeVersion=14.17.3
 
 VERSIONPATTERN="[0-9]{1,2}.[0-9]{1,2}.[0-9]{1,2}"
-
-sh node-version.sh
 
 echo -n "Please input a node version number (Enter 14.17.3): "
 
