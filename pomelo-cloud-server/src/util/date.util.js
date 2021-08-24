@@ -8,20 +8,29 @@ const moment = require('moment');
 module.exports = {
   /**
    * 获取当前日期
-   * 格式：YYYY-MM-DD HH:mm:ss
-   * @returns {string} date
+   * 格式：YYYY-MM-DD hh:mm:ss
+   * @returns {string} dateTime
    */
   general() {
-    return moment().format('YYYY-MM-DD HH:mm:ss');
+    return moment().format('YYYY-MM-DD hh:mm:ss');
+  },
+
+  /**
+   * 获取当前日期
+   * 格式：YYYY/MM/DD hh:mm:ss
+   * @returns {string} dateTime
+   */
+  common() {
+    return moment().format('YYYY/MM/DD hh:mm:ss');
   },
 
   /**
    * 获取当前精确日期
-   * 格式：YYYY-MM-DD HH:mm:ss:SSS
+   * 格式：YYYY-MM-DD hh:mm:ss:SSS
    * @returns {string} date
    */
   accurate() {
-    return moment().format('YYYY-MM-DD HH:mm:ss:SSS');
+    return moment().format('YYYY-MM-DD hh:mm:ss:SSS');
   },
 
   /**
@@ -35,11 +44,11 @@ module.exports = {
 
   /**
    * 获取当前时分秒
-   * 格式：HH:mm:ss
+   * 格式：hh:mm:ss
    * @returns {string} time
    */
   getTime() {
-    return moment().format('HH:mm:ss');
+    return moment().format('hh:mm:ss');
   },
 
   /**
