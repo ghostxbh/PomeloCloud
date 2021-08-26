@@ -5,13 +5,12 @@
  */
 const fs = require('fs');
 const os = require('os');
-const JSZIP = require('jszip');
+const ADMZIP = require('adm-zip');
 const DateUtil = require('../util/date.util');
 const CommonUtil = require('../util/common.util');
 const {COMMON, FILE_COMMON} = require('../constant');
 const PATH = FILE_COMMON.CONFIG_PATH + FILE_COMMON.FILE;
 const DOWNLOAD_FILE_NMAE = DateUtil.getDate() + '_download.zip';
-
 
 const FileService = {
   /**
@@ -47,7 +46,7 @@ const FileService = {
   writeFile(file, path) {
     if (file) {
       const name = file.originalname, uploadPath = process.cwd() + '/' + file.path;
-      const interval = setInterval(function () {
+      const interval = setInterval(function() {
         const isExists = fs.existsSync(uploadPath);
         if (isExists) {
           const body = fs.readFileSync(uploadPath);
@@ -85,8 +84,8 @@ const FileService = {
         const filePath = path + name;
         const fileStat = fs.statSync(filePath);
         if (fileStat.isDirectory()) {
-          const dirPath = `${filePath}${name}/`;
-          const fileNmae = `${name}.zip`;
+          const dirPath = `${ filePath }${ name }/`;
+          const fileNmae = `${ name }.zip`;
           const getFiles = fs.readdirSync(dirPath);
           const directory = FileCommon.getFileStat(getFiles, dirPath);
 
@@ -122,7 +121,7 @@ const FileService = {
 
     const isExists = fs.existsSync(path + DOWNLOAD_FILE_NMAE);
     if (isExists) {
-      fs.unlink(path + DOWNLOAD_FILE_NMAE, function (e) {
+      fs.unlink(path + DOWNLOAD_FILE_NMAE, function(e) {
         if (e) throw e;
         console.log('delete old file: ' + path + DOWNLOAD_FILE_NMAE);
         return getFilePath();
@@ -143,13 +142,13 @@ const FileService = {
       const filePath = path + file;
       const fileStat = fs.statSync(filePath);
       if (fileStat.isFile()) {
-        fs.unlink(filePath, function (e) {
+        fs.unlink(filePath, function(e) {
           if (e) throw e;
           console.log('delete file: ' + file);
         });
       } else if (fileStat.isDirectory()) {
         fs.rmdir(filePath, {maxRetries: 10, recursive: true, retryDelay: 1000},
-          function (e) {
+          function(e) {
             if (e) throw e;
             console.log('delete dir: ' + file);
           });
@@ -180,37 +179,16 @@ const FileService = {
 };
 
 const FileCommon = {
-  pushZip(floder, files, path) {
-    const zip = new JSZIP();
-    files.forEach((dirent, index) => {
-      let filePath = `${floder.root ? path + floder.root : path}${dirent.name}`;
-      if (dirent.isDirectory()) {
-        let zipFloder = zip.folder(filePath.replace(path, ''));
-        const getFiles = fs.readdirSync(filePath);
-        const childrenFiles = FileCommon.getFileStat(getFiles, filePath);
-
-        FileCommon.pushZip(zipFloder, childrenFiles, path);
-      } else {
-        floder.file(dirent.name, fs.readFileSync(filePath));
+  compressionZip(files, path, name) {
+    const zip = new ADMZIP();
+    files.forEach((file) => {
+      if (file.isFile()) {
+        zip.addLocalFile(path + file.name);
+      } else if (file.isDirectory) {
+        zip.addLocalFolder(path + file.name);
       }
     });
-  },
-  compression(files, path, fName) {
-    const filePath = fName ? path + fName : path + DOWNLOAD_FILE_NMAE;
-    const zip = new JSZIP();
-    FileCommon.pushZip(zip, files, path);
-    zip.generateAsync({
-      type: 'nodebuffer',
-      compression: 'DEFLATE',
-      compressionOptions: {
-        level: 9,
-      },
-    }).then(function (content) {
-      fs.writeFile(filePath, content, err => {
-        if (err) throw err;
-        console.log('compression done!');
-      });
-    });
+    fs.writeFileSync(path + name ? name : fileName, zip.toBuffer());
   },
   deleteDuplicate(files) {
     let index = -1;
@@ -267,11 +245,11 @@ const FileCommon = {
    * @param {string} path 文件路径
    * @return {json} fileData
    */
-  readJSONFileData: function (path) {
+  readJSONFileData: function(path) {
     let fileSync;
     // 根据不通系统获取文件流
     if (os.type() === COMMON.SYSTEM_VERSION.LINUX || os.type() === COMMON.SYSTEM_VERSION.MACOS) {
-      fileSync = fs.readFileSync(path, {flag: 'r', encoding: "utf8"});
+      fileSync = fs.readFileSync(path, {flag: 'r', encoding: 'utf8'});
     } else if (os.type() === COMMON.SYSTEM_VERSION.WINDOWS) {
       fileSync = fs.readFileSync(path, {flag: 'r'}).toString();
     }
@@ -287,7 +265,7 @@ const FileCommon = {
    * @param {string} path 路径
    * @return {string|boolean} path
    */
-  checkPath: function (path) {
+  checkPath: function(path) {
     if (path) {
       // 替换\为/
       if (path.indexOf('\\') > -1) {

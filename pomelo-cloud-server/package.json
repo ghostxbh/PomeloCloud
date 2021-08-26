@@ -10,12 +10,12 @@
   "author": "PomeloCloud",
   "license": "MIT",
   "dependencies": {
+    "adm-zip": "^0.5.5",
     "debug": "^4.3.1",
     "echarts": "^5.1.2",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
     "http-errors": "^1.8.0",
-    "jszip": "^3.6.0",
     "log4js": "^6.3.0",
     "moment": "^2.29.1",
     "systeminformation": "^5.7.7"
