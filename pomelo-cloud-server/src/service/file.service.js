@@ -11,13 +11,14 @@ const CommonUtil = require('../util/common.util');
 const {COMMON, FILE_COMMON} = require('../constant');
 const PATH = FILE_COMMON.CONFIG_PATH + FILE_COMMON.FILE;
 const DOWNLOAD_FILE_NMAE = DateUtil.getDate() + '_download.zip';
+const logger = require('../config/log.config').logger();
 
 const FileService = {
   /**
    * 获取文件列表
    * @param {string} path 路径 (default: file.json rootPath)
    * @param {any} options 选项
-   * @return [fileList]
+   * @return {[any]} 文件列表
    */
   fileList(path, options) {
     const {page} = options;
@@ -32,7 +33,7 @@ const FileService = {
       if (page) {
         files = CommonUtil.pagination(page.pageNo, page.pageSize, files);
       }
-      const fileList = FileCommon.formatFileType(files, path);
+      const fileList = FileCommon.getFileStats(files, path);
       result = {path, fileList};
     }
     return result;
@@ -43,7 +44,7 @@ const FileService = {
    * @param {any} file 文件
    * @param {string} path 写入路径
    */
-  writeFile(file, path) {
+  uploadFile(file, path) {
     if (file) {
       const name = file.originalname, uploadPath = process.cwd() + '/' + file.path;
       const interval = setInterval(function() {
@@ -63,20 +64,19 @@ const FileService = {
 
   /**
    * 下载文件
-   * @param [string] files 文件名数组
+   * @param {[string]} files 文件名数组
    * @param {string} path 路径
-   * @return {{filePath: string, fileNmae: string}|undefined}
+   * @return {{filePath: string, fileNmae: string}|any} 文件路径|文件名称
    */
   downloadFile(files = [], path) {
     const fileList = fs.readdirSync(path);
-    const allFiles = FileCommon.getFileStat(fileList, path);
+    const allFileStats = FileCommon.getFileStats(fileList, path);
 
     const getFilePath = () => {
-      const result = {filePath: '', fileNmae: ''};
-      if (files.length < 1 || files.length === allFiles.length) {
-        const dupFiles = FileCommon.deleteDuplicate(allFiles);
-        FileCommon.compression(dupFiles, path);
-        result.fileNmae = DOWNLOAD_FILE_NMAE;
+      const result = {filePath: '', fileName: ''};
+      if (files.length === allFileStats.length) {
+        FileCommon.compressionToZip(allFileStats, path);
+        result.fileName = DOWNLOAD_FILE_NMAE;
         result.filePath = path + DOWNLOAD_FILE_NMAE;
         return result;
       } else if (files.length === 1) {
@@ -84,166 +84,119 @@ const FileService = {
         const filePath = path + name;
         const fileStat = fs.statSync(filePath);
         if (fileStat.isDirectory()) {
-          const dirPath = `${ filePath }${ name }/`;
-          const fileNmae = `${ name }.zip`;
-          const getFiles = fs.readdirSync(dirPath);
-          const directory = FileCommon.getFileStat(getFiles, dirPath);
-
-          FileCommon.compression(directory, dirPath, fileNmae);
-          result.fileNmae = fileNmae;
-          result.filePath = dirPath + result.DOWNLOAD_FILE_NMAE;
+          fileStat.name = name;
+          const oneFileName = `${ name }.zip`;
+          FileCommon.compressionToZip([fileStat], path, oneFileName);
+          result.fileName = oneFileName;
+          result.filePath = path + oneFileName;
           return result;
         } else if (fileStat.isFile()) {
-          result.DOWNLOAD_FILE_NMAE = name;
+          result.fileName = name;
           result.filePath = path + name;
           return result;
         }
       } else if (files.length > 1) {
-        const readFiles = [];
-        files.forEach(file => {
-          if (typeof file === 'object') {
-            readFiles.push(file);
-          } else if (typeof file === 'string') {
-            const readFile = FileCommon.getReadFile(file, allFiles);
-            if (readFile) readFiles.push(readFile);
-          }
-        });
-        FileCommon.compression(readFiles, path, DOWNLOAD_FILE_NMAE);
-        result.fileNmae = DOWNLOAD_FILE_NMAE;
+        const fileStats = FileCommon.getFileStatsByNames(files, allFileStats);
+        FileCommon.compressionToZip(fileStats, path);
+        result.fileName = DOWNLOAD_FILE_NMAE;
         result.filePath = path + DOWNLOAD_FILE_NMAE;
         return result;
       }
     };
-
-    if (files.length === 1) {
-      return getFilePath();
-    }
-
-    const isExists = fs.existsSync(path + DOWNLOAD_FILE_NMAE);
-    if (isExists) {
-      fs.unlink(path + DOWNLOAD_FILE_NMAE, function(e) {
-        if (e) throw e;
-        console.log('delete old file: ' + path + DOWNLOAD_FILE_NMAE);
-        return getFilePath();
-      });
-    } else {
-      return getFilePath();
-    }
+    return getFilePath();
   },
 
   /**
    * 删除文件/文件夹
-   * @param [string] files 文件名数组
+   * @param {[string]} files 文件名数组
    * @param {string} path 路径
    * @return {boolean}
    */
-  remove(files = [], path) {
+  removeFile(files = [], path) {
     files.forEach(file => {
       const filePath = path + file;
       const fileStat = fs.statSync(filePath);
       if (fileStat.isFile()) {
         fs.unlink(filePath, function(e) {
           if (e) throw e;
-          console.log('delete file: ' + file);
+          logger.log('removeFile file: %s', file);
         });
       } else if (fileStat.isDirectory()) {
         fs.rmdir(filePath, {maxRetries: 10, recursive: true, retryDelay: 1000},
           function(e) {
             if (e) throw e;
-            console.log('delete dir: ' + file);
+            logger.log('removeFile dir: %s', file);
           });
       }
     });
     return true;
   },
-
-  getFileData(path = '', names = []) {
-    const result = [];
-    if (path && names.length > 0) {
-      names.forEach(name => result.push(FileCommon.readFile(path + name)));
-    } else if (path) {
-      return FileCommon.readFile(path);
-    }
-    return result;
-  },
-  checkFile(file) {
-    if (typeof file === 'object') {
-      for (const key in file) {
-        file[key] = FileCommon.checkPath(file[key]);
-      }
-    } else if (typeof file === 'string') {
-      file = FileCommon.checkPath(file);
-    }
-    return file;
-  },
 };
 
 const FileCommon = {
-  compressionZip(files, path, name) {
+  /**
+   * 压缩为zip文件
+   * @param {[any]} files 文件数组
+   * @param {string} path 路径
+   * @param {string} name 文件名称
+   */
+  compressionToZip(files, path, name) {
     const zip = new ADMZIP();
     files.forEach((file) => {
       if (file.isFile()) {
         zip.addLocalFile(path + file.name);
       } else if (file.isDirectory) {
-        zip.addLocalFolder(path + file.name);
+        zip.addLocalFolder(path + file.name, file.name);
       }
     });
-    fs.writeFileSync(path + name ? name : fileName, zip.toBuffer());
-  },
-  deleteDuplicate(files) {
-    let index = -1;
-    files.forEach((file, i) => {
-      if (typeof file === 'object') {
-        if (file.name === DOWNLOAD_FILE_NMAE) index = i;
-      } else if (typeof file === 'string') {
-        if (file === DOWNLOAD_FILE_NMAE) index = i;
-      }
-    });
-    files.splice(index, index + 1);
-    return files;
+    name = name ? name : DOWNLOAD_FILE_NMAE;
+    fs.writeFileSync(path + name, zip.toBuffer());
   },
 
-  getReadFile(fName, fileArr = []) {
-    for (let i = 0; i < fileArr.length; i++) {
-      const file = fileArr[i];
-      if (file.name === fName) {
-        return file;
+  /**
+   * 通过文件名数组过滤文件状态数组
+   * @param {[string]} fileNames 文件名数组
+   * @param {[any]} fileStats 文件状态数组
+   * @returns {[any]} 过滤后的文件状态数组
+   */
+  getFileStatsByNames(fileNames = [], fileStats = []) {
+    const newFileStats = [];
+    for (let i = 0; i < fileNames.length; i++) {
+      const name = fileNames[i];
+      for (let j = 0; j < fileStats.length; j++) {
+        const stat = fileStats[j];
+        if (stat.name === name) {
+          newFileStats.push(stat);
+          break;
+        }
       }
     }
-    return false;
+    return newFileStats;
   },
 
-  formatFileType(fileList, path) {
+  /**
+   *
+   * @param {[string]} fileList 文件名称数组
+   * @param {string} path 路径
+   * @returns {[any]} 文件状态数组
+   */
+  getFileStats(fileList, path) {
     const newFileList = [];
     try {
       fileList.map(file => {
-        const newFile = fs.statSync(path + file);
+        let newFile = path ? fs.statSync(path + file) : fs.statSync(file);
         newFileList.push({...newFile, name: file});
       });
     } catch (e) {
-      console.error('formatFileType: ', e);
+      logger.error('%c getFileStats error:', 'color:#0f0;', e);
     }
     return newFileList;
-  },
-
-  getFileStat(fileList, path) {
-    const allFiles = [];
-    fileList.map(file => {
-      let newFile = path ? fs.statSync(path + file) : fs.statSync(file);
-      if (newFile) {
-        newFile.name = file;
-      } else {
-        return;
-      }
-      allFiles.push(newFile);
-    });
-    return allFiles;
   },
 
   /**
    * 读取JSON文件
    * @param {string} path 文件路径
-   * @return {json} fileData
+   * @return {json} 文件数据
    */
   readJSONFileData: function(path) {
     let fileSync;
@@ -263,7 +216,7 @@ const FileCommon = {
   /**
    * 检查路径
    * @param {string} path 路径
-   * @return {string|boolean} path
+   * @return {string|boolean} 检查路径
    */
   checkPath: function(path) {
     if (path) {
