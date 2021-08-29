@@ -31,10 +31,12 @@ const FileService = {
     if (exists) {
       let files = fs.readdirSync(path);
       if (page) {
+        options.page.total = files.length;
         files = CommonUtil.pagination(page.pageNo, page.pageSize, files);
       }
       const fileList = FileCommon.getFileStats(files, path);
-      result = {path, fileList};
+
+      result = {path, fileList, condition: {...options}};
     }
     return result;
   },
