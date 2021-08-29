@@ -2,7 +2,7 @@
 /**
  * code by PomeloCloud
  */
-const {ACTIVE} = require('../constant');
+const {ACTIVE} = require('../data/constant');
 const active = process.env.ACTIVE;
 const log4js = require('log4js');
 const fs = require('fs');
