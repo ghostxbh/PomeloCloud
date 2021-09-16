@@ -17,9 +17,9 @@ const RandomCodeType = {
   NLU: 'nlu',// number、lower case and upper case
 }
 
-module.exports = RandomCodeType;
+exports.RandomCodeType = RandomCodeType;
 
-module.exports = {
+exports.CommonUtil = {
   /**
    * 分页组件
    * @param {number} pageNo 页码
