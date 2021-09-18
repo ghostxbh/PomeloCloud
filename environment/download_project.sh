@@ -14,7 +14,7 @@ export PATH
 hasNetwork=0
 
 #测试网络
-function networkConnect()
+networkConnect()
 {
     #超时时间
     local timeout=1
@@ -37,7 +37,7 @@ function networkConnect()
 }
 
 #下载项目
-function projectDownload()
+projectDownload()
 {
     # github下载地址
     local github=https://github.com/ghostxbh/PomeloCloud.git
@@ -47,7 +47,7 @@ function projectDownload()
 
     networkConnect
 
-    if [ hasNetwork=0 ]; then
+    if [ $hasNetwork=0 ]; then
         git clone $gitee
     else
         git clone $github
