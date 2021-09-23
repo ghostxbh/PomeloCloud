@@ -6,7 +6,6 @@
 const querystring = require('querystring');
 const uuid = require('uuid');
 const logger = require('./logger.config').logger();
-const {replacePrefix} = require('../../utils/network.util');
 
 module.exports = ((req, res, next) => {
   const traceId = uuid.v4();
@@ -21,10 +20,14 @@ module.exports = ((req, res, next) => {
     };
   };
 
+  const replaceIpPrefix = function(ip) {
+    return ip.indexOf('::ffff:') > -1 ? ip.replace(/::ffff:/, '') : '-';
+  };
+
   // TODO 可做权限、监控、全链路相关中间件日志过滤
   const reqStart = function() {
     const body = req.method === 'GET' ? querystring.parse(req.query) : req.method === 'POST' ? req.body : '';
-    let ip = replacePrefix(req.ip), url = req.originalUrl;
+    let ip = replaceIpPrefix(req.ip), url = req.originalUrl;
     req.requstTimestamp = Date.now();
 
     logger.info(`[${ url }] request [${ traceId }] from [${ ip }] : ${ JSON.stringify(body) }`);

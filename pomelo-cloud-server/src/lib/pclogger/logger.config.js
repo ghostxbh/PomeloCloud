@@ -16,34 +16,39 @@ const {
 const pattern = LoggerUtil.isRunInDocker() ? LoggerPattern : LoggerPatternWithColor;
 const level = LoggerUtil.getLevelFromEnv() || 'debug';
 const appenders = LoggerUtil.getAppendersFromEnv() || Appenders;
-const filename = 'logs/app_log.log';
 
-log4js.configure({
-  appenders: {
-    stdout: {
-      type: 'stdout', layout: {pattern, type: 'pattern'},
-    },
-    fileout: {
-      maxLogSize: MaxLogSize,
-      backups: Backups,
-      filename,
-      pattern: 'yyyy-MM-dd.log',
-      type: 'file',
-      layout: {
-        type: 'pattern',
-        pattern,
+class LoggerConfig {
+  static init(filename) {
+    log4js.configure({
+      appenders: {
+        stdout: {
+          type: 'stdout', layout: {pattern, type: 'pattern'},
+        },
+        fileout: {
+          maxLogSize: MaxLogSize,
+          backups: Backups,
+          filename,
+          pattern: 'yyyy-MM-dd.log',
+          type: 'file',
+          layout: {
+            type: 'pattern',
+            pattern,
+          },
+        },
       },
-    },
-  },
-  categories: {
-    default: {appenders, level},
-    app: {appenders, level},
-  },
-  // 替换 console.log
-  replaceConsole: true,
-  disableClustering: true,
-});
+      categories: {
+        default: {appenders, level},
+        app: {appenders, level},
+      },
+      // 替换 console.log
+      replaceConsole: true,
+      disableClustering: true,
+    });
+  }
 
-exports.logger = function(name) {
-  return !name ? log4js.getLogger(name) : log4js.getLogger();
-};
+  static logger(name) {
+    return !name ? log4js.getLogger(name) : log4js.getLogger();
+  }
+}
+
+module.exports = LoggerConfig;
