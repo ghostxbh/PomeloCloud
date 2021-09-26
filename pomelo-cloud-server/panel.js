@@ -14,6 +14,7 @@ var debug = require('debug')('pomelo-cloud-server:server');
 var http = require('http');
 var app = require('./app');
 var fs = require('fs');
+var logger = require('log4js').getLogger();
 var PORT = fs.readFileSync('../config/server-port.pl');
 var port = normalizePort(process.env.PORT || PORT);
 app.set('port', port);
@@ -66,11 +67,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      logger.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      logger.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
@@ -88,5 +89,5 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-  console.log('Server is listening on port %f', port);
+  logger.log('Server is listening on port %f', port);
 }
