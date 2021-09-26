@@ -110,7 +110,7 @@ class NetworkUtil {
   static isInBlackIfNameList(name) {
     const blackIps = NetworkService.getBlackIpList();
     for (let i = 0; i < blackIps; i++) {
-      if (name === blackIfNames[i]) {
+      if (name === NetworkService.getBlackNameList()[i]) {
         return true;
       }
     }

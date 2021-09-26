@@ -36,5 +36,14 @@ class NetworkService {
     }
     return whiteIpList;
   }
+
+  static getBlackNameList() {
+    const network = this.init();
+    let whiteNameList = [];
+    if (network.blacklist && network.blacklist.names) {
+      whiteNameList = network.whitelist.names;
+    }
+    return whiteNameList;
+  }
 }
 module.exports = NetworkService;
