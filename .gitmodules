@@ -1,0 +1,8 @@
+[submodule "pomelo-cloud-server"]
+	path = pomelo-cloud-server
+	url = ../pomelo-cloud-server
+
+[submodule "pomelo-cloud-vue"]
+	path = pomelo-cloud-vue
+	url = ../pomelo-cloud-vue
+
