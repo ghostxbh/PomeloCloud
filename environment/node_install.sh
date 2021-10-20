@@ -124,7 +124,7 @@ configSysPath()
 
 main()
 {
-    echo "------------------------开 始-------------------------"
+    echo "------------Node_Install_Start------------"
     checkPanelPath
     checkNodeIsExist
     download
@@ -133,8 +133,8 @@ main()
     configSysPath
 
     source $EXPORT_NODE # Enable the configuration to take effect immediately.
-    echo "------------------------结 束-------------------------"
     echo -e "已成功安装 node 和 npm.\n 测试安装: node -v 和 npm -v"
+    echo "------------Node_Install_End---------------"
 }
 
 main
