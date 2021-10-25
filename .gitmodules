@@ -1,8 +1,11 @@
 [submodule "pomelo-cloud-server"]
 	path = pomelo-cloud-server
-	url = git@github.com:ghostxbh/pomelo-cloud-server.git
+	url = ../pomelo-cloud-server
 
 [submodule "pomelo-cloud-vue"]
 	path = pomelo-cloud-vue
-	url = git@github.com:ghostxbh/pomelo-cloud-vue.git
+	url = ../pomelo-cloud-vue
 
+[submodule "pomelo-cloud-plugins"]
+	path = pomelo-cloud-plugins
+	url = ../pomelo-cloud-plugins
