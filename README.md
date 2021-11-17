@@ -1,8 +1,8 @@
 # PomeloCloud
 柚子云 - 自定义个人建站面板
 
-### 使用手册 http://manual.pomelo.work
-### 问题反馈 https://gitee.com/ghostxbh/pomelo-cloud/issues
+### 使用手册 https://gitee.com/ghostxbh/PomeloCloud
+### 问题反馈 https://gitee.com/ghostxbh/PomeloCloud/issues
 
 ## 安装
 ### CentOS
