@@ -1,0 +1,142 @@
+<style>
+  .tabs-section {
+    margin: 2% 2%;
+  }
+
+  .black_bold {
+    font-weight: bold;
+  }
+
+  .program_show {
+    margin-top: 2%;
+  }
+
+  .program_show img {
+    padding: 0 0 0 1%;
+  }
+
+  .black_bold_size {
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .first_show_span {
+    padding: 0 0 0 12%;
+  }
+
+  .second_show_span {
+    padding: 0 0 0 28%;
+  }
+
+  .robot_program_down {
+    margin-top: 7%;
+    border: solid 1px #c6c1c1;
+  }
+
+  .robot_program_down ul {
+    margin-top: 2%;
+  }
+
+  .robot_program_down ul li {
+    list-style: none;
+  }
+
+  .robot_program_down ul li input {
+    float: left;
+  }
+</style>
+<section class="tabs-section">
+  <div>
+    <h1>Program</h1>
+    <p>Here you can program your robot to do tasks</p>
+
+    <p>
+      To program your robot, select the nodes from the
+      <span class="black_bold">Node List</span> and they will appear on the
+      <span class="black_bold">Program Tree</span>
+    </p>
+
+    <div class="program_show">
+      <div class="program_show_title">
+        <span class="black_bold_size first_show_span">Node List</span>
+        <span class="black_bold_size second_show_span">Program Tree</span>
+      </div>
+      <img src="../static/images/node_tree.png" width="300" height="378">
+      <img src="../static/images/program.png" width="269" height="378">
+    </div>
+
+    <div class="robot_program_down">
+      <ul>
+        <li>
+          <label>
+            <input type="checkbox" class="start_checkbox">
+            Add Before Start Sequence
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="checkbox" class="variable_checkbox">
+            Set Initial Variable Values
+          </label>
+        </li>
+        <li>
+          <label>
+            <input type="checkbox" class="loops_checkbox" checked>
+            Program Loops Forever
+          </label>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  let $startCheckbox;
+  let $variableCheckbox;
+  let $loopsCheckbox;
+  $(function() {
+    $startCheckbox = $('.start_checkbox');
+    $variableCheckbox = $('.variable_checkbox');
+    $loopsCheckbox = $('.loops_checkbox');
+
+    $startCheckbox.prop('checked', beforeStartHasChecked);
+    $variableCheckbox.prop('checked', initialVariablesHasChecked);
+    $loopsCheckbox.prop('checked', loopsForceHasChecked);
+  });
+
+  $startCheckbox.click(function() {
+    if (beforeStartHasChecked) {
+      beforeStartHasChecked = false;
+      const startNode = zTreeObj.getNodeByParam('type', 'BEFORESTART');
+      return zTreeObj.removeNode(startNode);
+    }
+    beforeStartHasChecked = true;
+    const beforeStartNode = common.addBeforeStart();
+    const variableNode = zTreeObj.getNodeByParam('type', 'VARIABLES');
+    let addNodes;
+    if (variableNode) {
+      const nodeIndex = zTreeObj.getNodeIndex(variableNode);
+      addNodes = zTreeObj.addNodes(null, nodeIndex + 1, beforeStartNode);
+    } else {
+      addNodes = zTreeObj.addNodes(null, 0, beforeStartNode);
+    }
+    zTreeObj.selectNode(addNodes);
+    currentSelectedNode = addNodes;
+    $('.tab_content_command').empty().load('program/before_start.html');
+  });
+
+  $('.variable_checkbox').click(function() {
+    if (initialVariablesHasChecked) {
+      initialVariablesHasChecked = false;
+      const variableNode = zTreeObj.getNodeByParam('type', 'VARIABLES');
+      return zTreeObj.removeNode(variableNode);
+    }
+    initialVariablesHasChecked = true;
+    const beforeStartNode = common.addInitVariables();
+    const addNodes = zTreeObj.addNodes(null, 0, beforeStartNode);
+    zTreeObj.selectNode(addNodes);
+    currentSelectedNode = addNodes;
+    $('.tab_content_command').empty().load('program/init_variables.html');
+  });
+</script>

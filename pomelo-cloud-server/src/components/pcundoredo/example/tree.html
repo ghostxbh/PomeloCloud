@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang='zh-cn'>
+<head>
+  <title>【Tree】树形数据操作：撤销重做、剪切复制粘贴、上移下移、删除</title>
+  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <meta name='renderer' content='webkit'>
+  <meta name='viewport' content='initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
+  <link rel='stylesheet' href='static/bootstrap/css/bootstrap.min.css'>
+  <link rel='stylesheet' href='static/bootstrap/css/bootstrap-theme.css'>
+  <link rel='stylesheet' href='static/ztree/css/metroStyle/metroStyle.css'>
+  <link rel='stylesheet' href='static/index.css'>
+
+  <script src='static/jquery-1.10.2.min.js'></script>
+  <script src='static/bootstrap/js/bootstrap.min.js'></script>
+  <script src='static/ztree/js/jquery.ztree.all.js'></script>
+  <script src="static/lodash/lodash.min.js"></script>
+</head>
+<body>
+<div class='context'>
+  <div class='context_bread'>
+    <h2 class="context-title">【Tree】树形数据操作：撤销重做、剪切复制粘贴、上移下移、删除</h2>
+    <div class='pomelo-config-tabs'>
+      <ul class='nav nav-tabs' id="command-node-tab">
+        <li class='active'><a href='#basic'>基础</a></li>
+        <li><a href='#advanced'>高级</a></li>
+        <li><a href='#template'>模板</a></li>
+        <li><a href='#setting'>设置</a></li>
+      </ul>
+
+      <div class="tab-content">
+        <div class='tab-pane active' id="basic">
+          <ul>
+            <li>
+              <button class='btn btn-default btn-xs' id='move'>Move</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='waypoint'>Waypoint</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='assignment'>Assignment</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='comment'>Comment</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='direction'>Direction</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='folder'>Folder</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='halt'>Halt</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='popup'>Popup</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='set'>Set</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='wait'>Wait</button>
+            </li>
+          </ul>
+        </div>
+        <div class="tab-pane" id="advanced">
+          <ul>
+            <li>
+              <button class='btn btn-default btn-xs' id='if'>If</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='loop'>Loop</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='thread'>Thread</button>
+            </li>
+          </ul>
+        </div>
+        <div class="tab-pane" id="template">
+          <ul>
+            <li>
+              <button class='btn btn-default btn-xs' id='force'>Force</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='pallet'>Pallet</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='screwdriving'>ScrewDriving</button>
+            </li>
+            <li>
+              <button class='btn btn-default btn-xs' id='seek'>Seek</button>
+            </li>
+          </ul>
+        </div>
+        <div class="tab-pane" id="setting">
+        </div>
+      </div>
+
+      <div class="command_children_config">
+      </div>
+      <!--<textarea class="data_show_json"></textarea>-->
+    </div>
+    <div class='pomelo-tree-view'>
+      <div class='tree-view-search'>
+        <input type='search' size='50' id='search_box'>
+        <button class='btn btn-success btn-xs' onclick='searchNode()'>搜索</button>
+        <button class='btn btn-warning btn-xs' onclick='searchEmpty()'>清空</button>
+      </div>
+      <div class='tree-view-ztree'>
+        <ul id='ztree' class='ztree'></ul>
+      </div>
+    </div>
+    <div class='pomelo-tree-func'>
+      <ul>
+        <li>
+          <button id='moveup'>上移</button>
+        </li>
+        <li>
+          <button id='movedown'>下移</button>
+        </li>
+        <li>
+          <button id='undo'>撤销</button>
+        </li>
+        <li>
+          <button id='redo'>重做</button>
+        </li>
+        <li>
+          <button id='cut'>剪切</button>
+        </li>
+        <li>
+          <button id='copy'>复制</button>
+        </li>
+        <li>
+          <button id='paste'>粘贴</button>
+        </li>
+        <li>
+          <button id='delete'>删除</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<script src="static/common.js"></script>
+<script src="static/operation-node.js"></script>
+<script src="static/ztree-node.js"></script>
+<script></script>
+<script>
+  $('#command-node-tab a').click(function(e) {
+    e.preventDefault();
+    $(this).tab('show');
+  });
+
+  $('a[data-toggle="tab"]').on('shown', function(e) {
+    e.target; // 当前活动的标签
+    e.relatedTarget; // 上一个选择的标签
+  });
+
+  let tabId = 'basic';
+  let beforeStartHasChecked = false;
+  let initialVariablesHasChecked = false;
+  let loopsForceHasChecked = true;
+
+  let zTreeObj;
+  let currentSelectedNode = false;
+  let copyNode;
+  let currentPointIndex = 0;
+  var setting = {
+    edit: {
+      drag: {
+        isCopy: true,
+        isMove: true,
+      },
+    },
+    view: {
+      showIcon: false,
+      fontCss: setFontCss,
+    },
+    callback: {
+      onClick: zTreeOnClick,
+      onNodeCreated: zTreeOnNodeCreated,
+    },
+  };
+
+  // 绑定点击事件，获取点击节点信息
+  function zTreeOnClick(event, treeId, treeNode) {
+    currentSelectedNode = treeNode;
+    console.log('zTreeOnClick');
+    console.log(currentSelectedNode);
+    const type = treeNode.type;
+    loadCommandPage(type);
+  }
+
+  function zTreeOnNodeCreated(event, treeId, treeNode) {
+    console.log('zTreeOnNodeCreated');
+    var node = _.cloneDeep(treeNode);
+  }
+
+  var zNodes = [
+    {
+      id: 0,
+      name: 'Robot Program',
+      type: 'ROOT',
+      open: true,
+      children: [],
+    },
+  ];
+
+  $(document).ready(function() {
+    $('#command-node-tab a:first').tab('show');
+    // var cacheNodes = window.localStorage.getItem('programNodes');
+    zTreeObj = $.fn.zTree.init($('#ztree'), setting, zNodes);
+    var rootNode = zTreeObj.getNodeByParam('type', 'ROOT');
+    console.log(rootNode);
+    currentSelectedNode = rootNode;
+    loadCommandPage('ROOT');
+  });
+
+  function loadCommandPage(type) {
+    var $config = $('.command_children_config');
+    $config.empty();
+    switch (type) {
+      case 'VARIABLES':
+        $config.load('program/init_variables.html');
+        break;
+      case 'BEFORESTART':
+        $config.load('program/before_start.html');
+        break;
+      case 'ROOT':
+        $config.load('program/robot_program.html');
+        break;
+      case 'MOVE':
+        $config.load('program/move.html');
+        break;
+      case 'WAYPOINT':
+        $config.load('program/waypoint.html');
+        break;
+    }
+    $config.css('display', 'block');
+  }
+
+  // 检查当前节点
+  function checkCurrent(mainMsg) {
+    if (!currentSelectedNode) {
+      alert('没有选中节点');
+      return true;
+    }
+    if (currentSelectedNode.type === 'ROOT') {
+      if (mainMsg) alert(mainMsg);
+      return true;
+    }
+    return false;
+  }
+
+  let nodeList;
+
+  // 搜索节点
+  function searchNode() {
+    var words = $('#search_box').val();
+    if (!words) return;
+    updateNodes(false, nodeList ?? []);
+    nodeList = zTreeObj.getNodesByParamFuzzy('name', words);
+    updateNodes(true, nodeList ?? []);
+  }
+
+  // 清空搜索
+  function searchEmpty() {
+    $('#search_box').val('');
+    updateNodes(false, nodeList ?? []);
+  }
+
+  //高亮显示被搜索到的节点
+  function updateNodes(highlight, nodeList) {
+    for (let i = 0, l = nodeList.length; i < l; i++) {
+      nodeList[i].highlight = highlight;
+      zTreeObj.expandNode(nodeList[i].getParentNode(), true, false, false); //将搜索到的节点的父节点展开
+      zTreeObj.updateNode(nodeList[i]);
+    }
+  }
+
+  // 设置样式
+  function setFontCss(treeId, treeNode) {
+    return (!!treeNode.highlight) ? {color: '#f33333', 'font-weight': 'bold'} : {
+      color: '#333',
+      'font-weight': 'normal',
+    };
+  }
+
+  // 检查当前节点
+  function checkIsInitVariables() {
+    if (currentSelectedNode.type === 'VARIABLES') {
+      alert('初始化变量不允许添加子节点');
+      return true;
+    }
+    return false;
+  }
+
+  var common = {
+    addInitVariables() {
+      return {
+        name: 'Init Variables',
+        type: 'VARIABLES',
+      };
+    },
+
+    addBeforeStart() {
+      return {
+        name: 'BeforeStart',
+        type: 'BEFORESTART',
+        children: [],
+      };
+    },
+
+    addMovePoint() {
+      currentPointIndex = currentPointIndex + 1;
+      return {
+        name: 'MoveJ',
+        type: 'MOVE',
+        open: true,
+        children: [
+          {
+            type: 'WAYPOINT',
+            name: `Waypoint_${ currentPointIndex }`,
+          },
+        ],
+      };
+    },
+
+    addPoint() {
+      // currentPointIndex = currentPointIndex + 1;
+      return {
+        type: 'WAYPOINT',
+        name: `Waypoint_${ currentPointIndex }`,
+      };
+    },
+
+    saveZNodesToLocalStorage() {
+      var allNodes = zTreeObj.getNodes();
+      // window.localStorage.setItem('programNodes', JSON.stringify(allNodes));
+    },
+
+    setNodeDataToSave(node, keys = [], values = []) {
+      if (!node) return;
+      if (keys.length !== values.length) return;
+      var dataJson = node.dataJson ?? {};
+      for (let i = 0; i < keys.length; i++) {
+        dataJson[keys[i]] = values[i];
+      }
+      node.dataJson = dataJson;
+      zTreeObj.updateNode(node);
+      common.saveZNodesToLocalStorage();
+    },
+  };
+
+  function formatJSON(json, indent, leftBracesInSameLine) {
+    var $json = $('.data_show_json');
+    json = json ? json : $json.val();
+
+    function getIndentStr(level) {
+      var str = '';
+      for (var i = 0; i < level; i++) str += (indent || '    ');
+      return str;
+    }
+
+    function format(obj, level) {
+      level = level == undefined ? 0 : level;
+      var result = '';
+      if (typeof obj == 'object' && obj != null) // 如果是object或者array
+      {
+        var isArray = obj instanceof Array, idx = 0;
+        result += (isArray ? '[' : '{') + '\n';
+        for (var i in obj) {
+          result += (idx++ > 0 ? ',\n' : ''); // 如果不是数组或对象的第一个内容，追加逗号
+          var nextIsObj = (typeof obj[i] == 'object' && obj[i] != null), indentStr = getIndentStr(level + 1);
+          result += (isArray && nextIsObj) ? '' : indentStr; // 如果当前是数组并且子项是对象，无需缩进
+          result += isArray ? '' : ('"' + i + '": ' + (nextIsObj && !leftBracesInSameLine ? '\n' : ''));
+          result += (!nextIsObj || (nextIsObj && leftBracesInSameLine && !isArray)) ? '' : indentStr;
+          result += format(obj[i], level + 1); // 递归调用
+        }
+        result += '\n' + getIndentStr(level) + (isArray ? ']' : '}') + '';
+      } else // 如果是 null、number、boolean、string
+      {
+        var quot = typeof obj == 'string' ? '"' : '';//是否是字符串
+        result += (quot + obj + quot + '');
+      }
+      return result;
+    }
+
+    var formatJson = format(eval('(' + json + ')'));
+    $json.text(formatJson);
+  }
+
+  function deepCompare(x, y) {
+    var i, l, leftChain, rightChain;
+
+    function compare2Objects(x, y) {
+      var p;
+
+      // remember that NaN === NaN returns false
+      // and isNaN(undefined) returns true
+      if (isNaN(x) && isNaN(y) && typeof x === 'number' && typeof y === 'number') {
+        return true;
+      }
+
+      // Compare primitives and functions.
+      // Check if both arguments link to the same object.
+      // Especially useful on the step where we compare prototypes
+      if (x === y) {
+        return true;
+      }
+
+      // Works in case when functions are created in varructor.
+      // Comparing dates is a common scenario. Another built-ins?
+      // We can even handle functions passed across iframes
+      if ((typeof x === 'function' && typeof y === 'function') ||
+        (x instanceof Date && y instanceof Date) ||
+        (x instanceof RegExp && y instanceof RegExp) ||
+        (x instanceof String && y instanceof String) ||
+        (x instanceof Number && y instanceof Number)) {
+        return x.toString() === y.toString();
+      }
+
+      // At last checking prototypes as good as we can
+      if (!(x instanceof Object && y instanceof Object)) {
+        return false;
+      }
+
+      if (x.isPrototypeOf(y) || y.isPrototypeOf(x)) {
+        return false;
+      }
+
+      if (x.varructor !== y.varructor) {
+        return false;
+      }
+
+      if (x.prototype !== y.prototype) {
+        return false;
+      }
+
+      // Check for infinitive linking loops
+      if (leftChain.indexOf(x) > -1 || rightChain.indexOf(y) > -1) {
+        return false;
+      }
+
+      // Quick checking of one object being a subset of another.
+      // todo: cache the structure of arguments[0] for performance
+      for (p in y) {
+        if (y.hasOwnProperty(p) !== x.hasOwnProperty(p)) {
+          return false;
+        } else if (typeof y[p] !== typeof x[p]) {
+          return false;
+        }
+      }
+
+      for (p in x) {
+        if (y.hasOwnProperty(p) !== x.hasOwnProperty(p)) {
+          return false;
+        } else if (typeof y[p] !== typeof x[p]) {
+          return false;
+        }
+
+        switch (typeof (x[p])) {
+          case 'object':
+          case 'function':
+
+            leftChain.push(x);
+            rightChain.push(y);
+
+            if (!compare2Objects(x[p], y[p])) {
+              return false;
+            }
+
+            leftChain.pop();
+            rightChain.pop();
+            break;
+
+          default:
+            if (x[p] !== y[p]) {
+              return false;
+            }
+            break;
+        }
+      }
+
+      return true;
+    }
+
+    if (arguments.length < 1) {
+      return true; //Die silently? Don't know how to handle such case, please help...
+      // throw "Need two or more arguments to compare";
+    }
+
+    for (i = 1, l = arguments.length; i < l; i++) {
+
+      leftChain = []; //Todo: this can be cached
+      rightChain = [];
+
+      if (!compare2Objects(arguments[0], arguments[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+</script>
+</body>
+</html>

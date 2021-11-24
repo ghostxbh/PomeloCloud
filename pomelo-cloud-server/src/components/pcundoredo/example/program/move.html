@@ -1,0 +1,323 @@
+<style>
+  .tabs-section {
+    margin: 2% 2%;
+  }
+
+  input {
+    text-align: right;
+  }
+
+  .black_bold_size {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .move_header select {
+    width: 20%;
+    margin-left: 60%;
+  }
+
+  .choose_first {
+    margin-top: 5%;
+  }
+
+  .choose_first select {
+    width: 35%;
+  }
+
+  .choose_second {
+    margin-top: 5%;
+  }
+
+  .choose_second select {
+    width: 35%;
+  }
+
+  .choose_third {
+    margin-top: 7%;
+  }
+
+  .joint_speed {
+    margin-left: 50%;
+  }
+
+  .tool_speed {
+    margin-left: 50%;
+  }
+
+  .joint_speed_input {
+    margin-left: 22%;
+  }
+
+  .tool_speed_input {
+    margin-left: 22%;
+  }
+
+  .joint_acceleration {
+    margin-left: 50%;
+  }
+
+  .tool_acceleration {
+    margin-left: 50%;
+  }
+
+  .joint_acceleration_input {
+    margin-left: 22%;
+  }
+
+  .tool_acceleration_input {
+    margin-left: 22%;
+  }
+
+  .choose_third label {
+    float: left;
+  }
+
+  .blend_with_radius {
+    margin-left: 58%;
+  }
+
+  .move_footer {
+    margin-top: 13%;
+  }
+
+  .add_circle_move {
+    float: left;
+  }
+
+  .reset_button {
+    margin-left: 58%;
+  }
+</style>
+<section class="tabs-section">
+  <div>
+    <div class="move_header">
+      <span class="black_bold_size">Move</span>
+      <select id="move_select">
+        <option value="MoveJ">MoveJ</option>
+        <option value="MoveL">MoveL</option>
+        <option value="MoveP">MoveP</option>
+      </select>
+    </div>
+
+    <p>Specify how the robot will move between waypoints.</p>
+    <p>The values below apply to all child waypoints and depend on the selected movement type.</p>
+
+    <div class="choose_first">
+      <div>
+        <span class="set_tcp">Set TCP</span>
+        <span class="joint_speed">Joint Speed</span>
+        <span class="tool_speed">Tool Speed</span>
+      </div>
+      <select id="tcp_select">
+        <option>Use active TCP</option>
+        <option>Ignore Active TCP</option>
+        <option>TCP</option>
+      </select>
+      <input class="joint_speed_input" alt="Joint Speed" type="text" size="10" value="60.0">
+      <span class="joint_speed_span">&deg;/s</span>
+      <input class="tool_speed_input" alt="Tool Speed" type="text" size="10" value="9.8">
+      <span class="tool_speed_span">in/s</span>
+    </div>
+
+    <div class="choose_second">
+      <div>
+        <span class="feature">Feature</span>
+        <span class="joint_acceleration">Joint Acceleration</span>
+        <span class="tool_acceleration">Tool Acceleration</span>
+      </div>
+      <select id="feature_select">
+        <option>Base</option>
+        <option>Tool</option>
+        <option>Line_1</option>
+      </select>
+      <input class="joint_acceleration_input" alt="Joint Acceleration" type="text" size="10" value="80.0">
+      <span class="joint_acceleration_span">&deg;/s&sup2;</span>
+      <input class="tool_acceleration_input" alt="Tool Acceleration" type="text" size="10" value="47.2">
+      <span class="tool_acceleration_span">in/s&sup2;</span>
+    </div>
+
+    <div class="choose_third">
+      <label>
+        <input type="checkbox" class="use_joint_angles"><span class="use_joint_angles_span">Use joint angles</span>
+      </label>
+      <div class="blend_with_radius">
+        <div>
+          <span class="blend_with_radius_title">Blend with radius</span>
+        </div>
+        <input class="blend_with_radius_input" alt="Blend with radius" type="text" size="10" value="1.0">
+        <span class="blend_with_radius_span">in</span>
+      </div>
+    </div>
+
+    <div class="move_footer">
+      <div class="add_circle_move">
+        <button class="btn btn-default btn-lg"> +</button>
+        <span>Add circle move</span>
+      </div>
+      <div class="reset_button">
+        <button class="btn btn-default btn-lg" onclick="resetMove()">&emsp;&emsp;Reset&emsp;&emsp;</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  $(document).ready(function () {
+    const nodeName = currentSelectedNode.name;
+    chooseType(nodeName);
+    $(`#move_select option:contains(${nodeName})`).attr('selected', true);
+
+    const dataJson = currentSelectedNode.dataJson;
+    if (dataJson) {
+      $('.joint_speed_input').val(dataJson.jointSpeed);
+      $('.tool_speed_input').val(dataJson.toolSpeed);
+      $('.joint_acceleration_input').val(dataJson.jointAcceleration);
+      $('.tool_acceleration_input').val(dataJson.toolAcceleration);
+      $('.blend_with_radius_input').val(dataJson.blendWithRadius);
+
+      $(`#tcp_select option:contains(${dataJson.tcp})`).attr('selected', true);
+      $(`#feature_select option:contains(${dataJson.feature})`).attr('selected', true);
+      $('.use_joint_angles').prop('checked', dataJson.useJointAngles);
+
+      $('#tcp_select').prop('disabled', dataJson.useJointAngles);
+      $('#feature_select').prop('disabled', dataJson.useJointAngles);
+    }
+
+    $('#move_select').click(function () {
+      const moveType = $('#move_select').val();
+      chooseType(moveType);
+    })
+
+    $('.use_joint_angles').click(function () {
+      const useJointAngles = $('.use_joint_angles').prop('checked')
+      $('#tcp_select').prop('disabled', useJointAngles);
+      $('#feature_select').prop('disabled', useJointAngles);
+    })
+
+    $('.tab_content_command').click(function () {
+      const jointSpeed = $('.joint_speed_input').val();
+      const toolSpeed = $('.tool_speed_input').val();
+      const jointAcceleration = $('.joint_acceleration_input').val();
+      const toolAcceleration = $('.tool_acceleration_input').val();
+      const blendWithRadius = $('.blend_with_radius_input').val();
+
+      const tcp = $('#tcp_select').val();
+      const feature = $('#feature_select').val();
+      const useJointAngles = $('.use_joint_angles').prop('checked') || false;
+
+      common.setNodeDataToSave(currentSelectedNode,
+        ['jointSpeed', 'toolSpeed', 'jointAcceleration', 'toolAcceleration', 'blendWithRadius', 'tcp', 'feature', 'useJointAngles'],
+        [jointSpeed, toolSpeed, jointAcceleration, toolAcceleration, blendWithRadius, tcp, feature, useJointAngles]);
+    })
+  })
+
+  function chooseType(moveType) {
+    switch (moveType) {
+      case 'MoveJ':
+        moveJshow();
+        break;
+      case 'MoveL':
+        moveLshow();
+        break;
+      case 'MoveP':
+        movePshow();
+        break;
+    }
+  }
+
+  function moveJshow() {
+    $('.joint_speed').css('display', '');
+    $('.joint_speed_input').css('display', '');
+    $('.joint_speed_span').css('display', '');
+    $('.joint_acceleration').css('display', '');
+    $('.joint_acceleration_input').css('display', '');
+    $('.joint_acceleration_span').css('display', '');
+
+    $('.tool_speed').css('display', 'none');
+    $('.tool_speed_input').css('display', 'none');
+    $('.tool_speed_span').css('display', 'none');
+    $('.tool_acceleration').css('display', 'none');
+    $('.tool_acceleration_input').css('display', 'none');
+    $('.tool_acceleration_span').css('display', 'none');
+
+    $('.blend_with_radius').css('display', 'none');
+    $('.add_circle_move').css('display', 'none');
+
+    $('.use_joint_angles').prop('disabled', false);
+    $('.use_joint_angles_span').css('color', '#000000');
+    currentSelectedNode.name = 'MoveJ';
+    zTreeObj.updateNode(currentSelectedNode);
+  }
+
+  function moveLshow() {
+    $('.joint_speed').css('display', 'none');
+    $('.joint_speed_input').css('display', 'none');
+    $('.joint_speed_span').css('display', 'none');
+    $('.joint_acceleration').css('display', 'none');
+    $('.joint_acceleration_input').css('display', 'none');
+    $('.joint_acceleration_span').css('display', 'none');
+
+    $('.tool_speed').css('display', '');
+    $('.tool_speed_input').css('display', '');
+    $('.tool_speed_span').css('display', '');
+    $('.tool_acceleration').css('display', '');
+    $('.tool_acceleration_input').css('display', '');
+    $('.tool_acceleration_span').css('display', '');
+
+    $('.blend_with_radius').css('display', 'none');
+    $('.add_circle_move').css('display', 'none');
+
+    $('.use_joint_angles').prop('disabled', true);
+    $('.use_joint_angles_span').css('color', '#C9C7C7FF');
+    $('.use_joint_angles').prop('checked', false);
+    $('#tcp_select').prop('disabled', false);
+    $('#feature_select').prop('disabled', false);
+    currentSelectedNode.name = 'MoveL';
+    zTreeObj.updateNode(currentSelectedNode);
+  }
+
+  function movePshow() {
+    $('.joint_speed').css('display', 'none');
+    $('.joint_speed_input').css('display', 'none');
+    $('.joint_speed_span').css('display', 'none');
+    $('.joint_acceleration').css('display', 'none');
+    $('.joint_acceleration_input').css('display', 'none');
+    $('.joint_acceleration_span').css('display', 'none');
+
+    $('.tool_speed').css('display', '');
+    $('.tool_speed_input').css('display', '');
+    $('.tool_speed_span').css('display', '');
+    $('.tool_acceleration').css('display', '');
+    $('.tool_acceleration_input').css('display', '');
+    $('.tool_acceleration_span').css('display', '');
+
+    $('.blend_with_radius').css('display', '');
+    $('.add_circle_move').css('display', '');
+
+    $('.use_joint_angles').prop('disabled', true);
+    $('.use_joint_angles_span').css('color', '#C9C7C7FF');
+    $('.use_joint_angles').prop('checked', false);
+    $('#tcp_select').prop('disabled', false);
+    $('#feature_select').prop('disabled', false);
+    currentSelectedNode.name = 'MoveP';
+    zTreeObj.updateNode(currentSelectedNode);
+  }
+
+  function resetMove() {
+    const jointSpeed = '60.0';
+    const toolSpeed = '9.8';
+    const jointAcceleration = '80.0';
+    const toolAcceleration = '47.2';
+    const blendWithRadius = '1.0';
+    $('.joint_speed_input').val(jointSpeed);
+    $('.tool_speed_input').val(toolSpeed);
+    $('.joint_acceleration_input').val(jointAcceleration);
+    $('.tool_acceleration_input').val(toolAcceleration);
+    $('.blend_with_radius_input').val(blendWithRadius);
+
+    common.setNodeDataToSave(currentSelectedNode,
+      ['jointSpeed', 'toolSpeed', 'jointAcceleration', 'toolAcceleration', 'blendWithRadius'],
+      [jointSpeed, toolSpeed, jointAcceleration, toolAcceleration, blendWithRadius]);
+  }
+</script>
