@@ -7,8 +7,8 @@ const router = express.Router();
 const FileService = require('../../service/file.service');
 const logger = require('log4js').getLogger();
 
-router.post('/list', function (req, res, next) {
-  const {path, page, options} = req.body;
+router.post('/list', function(req, res, next) {
+  const {path, page = {pageNo: 1, pageSize: 10}, options} = req.body;
   try {
     const result = FileService.fileList(path, page, options);
     _ctx.setData(result);

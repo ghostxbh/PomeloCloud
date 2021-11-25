@@ -1,26 +1,27 @@
 'use strict';
 const fs = require('fs');
 const os = require('os');
-const ADMZIP = require('adm-zip');
+const AdmZip = require('adm-zip');
+const logger = require('log4js').getLogger();
 const DateUtil = require('../core/utils/date.util');
+const FileUtil = require('../core/utils/file.util');
 const {CommonUtil} = require('../core/utils/common.util');
-const {COMMON, FILE_COMMON} = require('../domain/data/constant');
 const {BizErrorCode} = require('../core/exception/biz-code');
 const ServiceException = require('../core/exception/service.exception');
 const DOWNLOAD_FILE_NMAE = DateUtil.getDate() + '_download.zip';
-const logger = require('log4js').getLogger();
+const {SYSTEM_PLATFORM_ENV} = require('../domain/constants/system.constant');
+const {DATE_FORMAT} = require('../domain/constants/date.constant');
 const {
   FILE_TYPE,
   FILE_ENCODING,
   CUSTOM_FILE_PATH,
-} = require('../domain/enums/file.enums');
+} = require('../domain/constants/file.constant');
 
 /**
  * code by PomeloCloud
- * 文件服务类
+ * 文件业务类
  */
 class FileService {
-
   static readFile(name, path, options) {
     let fileData;
     let filePath = path + name;
@@ -55,24 +56,70 @@ class FileService {
    * @return {[any]} 文件列表
    */
   static fileList(path, page, options) {
-    let result = {};
-
-    path = path ? path : CUSTOM_FILE_PATH.FILE_DEFAULT_PATH;
-    path = FileCommon.checkPath(path);
-
+    path = FileUtil.checkFilePath(path ? path : CUSTOM_FILE_PATH.FILE_DEFAULT_PATH);
     const exists = fs.existsSync(path);
-    if (exists) {
-      let files = fs.readdirSync(path);
-      files = FileCommon.filterFilePermission(files, path);
-      if (page) {
-        page.total = files.length;
-        files = CommonUtil.pagination(page.pageNo, page.pageSize, files);
-      }
-      const fileList = FileCommon.getFileStats(files, path);
-
-      result = {path, fileList, condition: {page: {...page}, options: {...options}}};
+    if (!exists) {
+      throw ServiceException.of(BizErrorCode.dir_path_error);
     }
+    let fileNames = fs.readdirSync(path);
+    const fileTypes = fs.readdirSync(path, {withFileTypes: true});
+    const {fileCount, folderCount} = this.summaryFileFolder(fileTypes);
+    page.total = fileNames.length;
+    fileNames = CommonUtil.pagination(page.pageNo, page.pageSize, fileNames);
+    const fileList = this.getFileStat(fileNames, path);
+    const result = {
+      path, fileList, fileCount, folderCount,
+      condition: {page: {...page}, options: {...options}},
+    };
     return result;
+  }
+
+  /**
+   * 汇总文件与目录数量
+   * @param files {any[]} 文件数组
+   * @returns {{folderCount: number, fileCount: number}}
+   */
+  static summaryFileFolder(files = []) {
+    let fileCount = 0, folderCount = 0;
+    files.map(f => {
+      if (f.isFile()) fileCount++;
+      if (f.isDirectory()) folderCount++;
+    });
+    return {fileCount, folderCount};
+  }
+
+  /**
+   * 获取文件状态
+   * @param fileNames {any[]} 文件名数组
+   * @param path {string} 路径
+   * @return any[]
+   */
+  static getFileStat(fileNames = [], path) {
+    let fileStatList = [];
+    const folderList = [];
+    const fileList = [];
+    fileNames.forEach(name => {
+      const newFileStat = Object.create(null);
+      const filePath = path ? path + name : path;
+      if (!fs.existsSync(filePath)) {
+        throw ServiceException.of(BizErrorCode.dir_path_error);
+      }
+      const fileStat = fs.statSync(filePath);
+      newFileStat.name = name;
+      newFileStat.lastUpdateTime = DateUtil.parseDateTime(fileStat.mtimeMs, DATE_FORMAT.DATETIME_SLASH);
+      if (fileStat.isFile()) {
+        newFileStat.isFile = true;
+        newFileStat.size = fileStat.size;
+        fileList.push(newFileStat);
+      } else if (fileStat.isDirectory()) {
+        newFileStat.isFolder = true;
+        const childDir = fs.readdirSync(filePath) || [];
+        newFileStat.size = childDir.length;
+        folderList.push(newFileStat);
+      }
+    });
+    fileStatList = [...folderList, ...fileList];
+    return fileStatList;
   }
 
   /**
@@ -219,12 +266,12 @@ const FileCommon = {
   getFileStats(fileList, path) {
     const newFileList = [];
     try {
-      fileList.map(file => {
-        let newFile = path ? fs.statSync(path + file) : fs.statSync(file);
-        newFile.updateTime = DateUtil.parTime(newFile.mtimeMs);
-        newFile.isFile = newFile.isFile();
-        newFile.isFolder = newFile.isDirectory();
-        newFileList.push({...newFile, name: file});
+      fileList.map(name => {
+        let newFile = path ? fs.statSync(path + name) : fs.statSync(name);
+        const updateTime = DateUtil.parseDateTime(newFile.mtimeMs);
+        const isFile = newFile.isFile();
+        const isFolder = newFile.isDirectory();
+        newFileList.push({size: newFile.blksize, name, isFile, isFolder, updateTime});
       });
     } catch (e) {
       logger.error('getFileStats error:', e);
@@ -265,37 +312,6 @@ const FileCommon = {
       fileSync = JSON.parse(fileSync);
     }
     return fileSync;
-  },
-
-  /**
-   * 检查路径
-   * @param {string} path 路径
-   * @return {string|boolean} 检查路径
-   */
-  checkPath: function(path) {
-    if (path) {
-      // 替换\为/
-      if (path.indexOf('\\') > -1) {
-        path = path.replace(/\\/g, '/');
-      }
-
-      // 查看文件设置根目录是否为文件
-      // 如果为文件，则设置路径为上一级目录路径
-      if (!path.endsWith('/')) {
-        const statSync = fs.statSync(path);
-        if (statSync.isDirectory()) {
-          path = path + '/';
-          return path;
-        }
-        if (statSync.isFile()) {
-          const lastIndexOf = path.lastIndexOf('/');
-          path = path.substring(0, lastIndexOf);
-          return path;
-        }
-      }
-      return path;
-    }
-    return false;
   },
 };
 

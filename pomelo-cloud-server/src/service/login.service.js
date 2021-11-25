@@ -3,15 +3,15 @@ const FileService = require('./file.service');
 const ServiceException = require('../core/exception/service.exception');
 const DateUtil = require('../core/utils/date.util');
 const {UserErrorCode} = require('../core/exception/biz-code');
-const GlobleCache = require('../core/cache/globle.chache');
+const GlobleCache = require('../core/extend/cache/globle.chache');
 const {
   CUSTOM_FILE_PATH,
   CUSTOM_OPERATION_FILE,
-} = require('../domain/enums/file.enums');
+} = require('../domain/constants/file.constant');
 
 /**
  * code by PomeloCloud
- * 文件服务类
+ * 登录业务类
  */
 class LoginService {
   static login(username, password, req) {
