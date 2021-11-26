@@ -4,6 +4,7 @@
  * 文件工具类
  */
 const fs = require('fs');
+const {FILE_TYPE} = require('../../domain/constants/file.constant');
 
 const FileUtil = {
   /**
@@ -84,6 +85,14 @@ const FileUtil = {
       return path;
     }
     return false;
+  },
+  getFileType(fileName) {
+    if (fileName.indexOf('.') > -1) {
+      const splitFileName = fileName.split('.');
+      const fileFormat = splitFileName[splitFileName.length - 1];
+      return fileFormat;
+    }
+    return FILE_TYPE.FILE;
   },
 };
 

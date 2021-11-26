@@ -2,9 +2,7 @@
 /**
  * code by PomeloCloud
  */
-
 const RESULT = Symbol('Context#result');
-
 const Context = {
   get result() {
     if (!this[RESULT]) {

@@ -9,12 +9,17 @@ const {CommonUtil} = require('../core/utils/common.util');
 const {BizErrorCode} = require('../core/exception/biz-code');
 const ServiceException = require('../core/exception/service.exception');
 const DOWNLOAD_FILE_NMAE = DateUtil.getDate() + '_download.zip';
-const {SYSTEM_PLATFORM_ENV} = require('../domain/constants/system.constant');
+const {
+  COMMON_PATH,
+  SYSTEM_PLATFORM_ENV,
+  SYSTEM_PLATFORM_USER_PATH,
+} = require('../domain/constants/system.constant');
 const {DATE_FORMAT} = require('../domain/constants/date.constant');
 const {
   FILE_TYPE,
   FILE_ENCODING,
   CUSTOM_FILE_PATH,
+  CUSTOM_OPERATION_FILE,
 } = require('../domain/constants/file.constant');
 
 /**
@@ -35,6 +40,14 @@ class FileService {
         case FILE_TYPE.XML:
           break;
         case FILE_TYPE.JSON:
+          try {
+            if (typeof fileBuffer === 'string') {
+              fileData = JSON.parse(fileBuffer);
+            }
+          } catch (e) {
+            logger.error('[FileService] readFile - toJSON fail');
+            fileData = '';
+          }
           break;
         case FILE_TYPE.INI:
           break;
@@ -49,6 +62,30 @@ class FileService {
   }
 
   /**
+   * 获取文件中心侧边栏
+   * @return object[]
+   */
+  static fileSidebar() {
+    const {sidebar} = this.readFile(CUSTOM_OPERATION_FILE.FILE_CONFIG,
+      CUSTOM_FILE_PATH.CONFIG_DIR + 'file/', {conversionType: FILE_TYPE.JSON}) || [];
+    // 根据不通系统获取文件流
+    sidebar.forEach(s => {
+      const key = s.title;
+      if (key === 'Trash') {
+        const platform = os.platform().toLowerCase();
+        if (platform === SYSTEM_PLATFORM_ENV.OS || platform === SYSTEM_PLATFORM_ENV.LINUX) {
+          s.link = COMMON_PATH.Trash_L;
+        } else {
+          s.link = COMMON_PATH.Trash_W;
+        }
+      } else {
+        s.link = SYSTEM_PLATFORM_USER_PATH + COMMON_PATH[key];
+      }
+    });
+    return sidebar;
+  }
+
+  /**
    * 获取文件列表
    * @param {string} path 路径
    * @param {object} page 分页
@@ -59,19 +96,47 @@ class FileService {
     path = FileUtil.checkFilePath(path ? path : CUSTOM_FILE_PATH.FILE_DEFAULT_PATH);
     const exists = fs.existsSync(path);
     if (!exists) {
-      throw ServiceException.of(BizErrorCode.dir_path_error);
+      logger.warn('[FileService] fileList - dir path error: ', path);
+      return;
     }
+    const {keywords, sort} = options;
     let fileNames = fs.readdirSync(path);
+    fileNames = this.accessFile(fileNames, path);
+    if (keywords) {
+      const fileNameArr = [];
+      fileNames.map(name => {
+        const regExp = new RegExp(keywords, 'gi');
+        const reg = name.match(regExp);
+        reg ? fileNameArr.push(name) : reg;
+      });
+      fileNames = fileNameArr;
+    }
     const fileTypes = fs.readdirSync(path, {withFileTypes: true});
+
     const {fileCount, folderCount} = this.summaryFileFolder(fileTypes);
     page.total = fileNames.length;
     fileNames = CommonUtil.pagination(page.pageNo, page.pageSize, fileNames);
     const fileList = this.getFileStat(fileNames, path);
+
     const result = {
       path, fileList, fileCount, folderCount,
       condition: {page: {...page}, options: {...options}},
     };
     return result;
+  }
+
+  static accessFile(fileNames = [], path) {
+    const hasAccessFileNames = [];
+    fileNames.forEach(name => {
+      try {
+        const filePath = path + name;
+        fs.accessSync(filePath, fs.constants.F_OK | fs.constants.R_OK | fs.constants.W_OK);
+        hasAccessFileNames.push(name);
+      } catch (e) {
+        logger.warn('[FileService] accessFile - not access: %s', name);
+      }
+    });
+    return hasAccessFileNames;
   }
 
   /**
@@ -102,20 +167,27 @@ class FileService {
       const newFileStat = Object.create(null);
       const filePath = path ? path + name : path;
       if (!fs.existsSync(filePath)) {
-        throw ServiceException.of(BizErrorCode.dir_path_error);
+        logger.warn('[FileService] getFileStat - dir path error: ', filePath);
+        return;
       }
-      const fileStat = fs.statSync(filePath);
-      newFileStat.name = name;
-      newFileStat.lastUpdateTime = DateUtil.parseDateTime(fileStat.mtimeMs, DATE_FORMAT.DATETIME_SLASH);
-      if (fileStat.isFile()) {
-        newFileStat.isFile = true;
-        newFileStat.size = fileStat.size;
-        fileList.push(newFileStat);
-      } else if (fileStat.isDirectory()) {
-        newFileStat.isFolder = true;
-        const childDir = fs.readdirSync(filePath) || [];
-        newFileStat.size = childDir.length;
-        folderList.push(newFileStat);
+      try {
+        const fileStat = fs.statSync(filePath);
+        newFileStat.name = name;
+        newFileStat.lastUpdateTime = DateUtil.parseDateTime(fileStat.mtimeMs, DATE_FORMAT.DATETIME_SLASH);
+        if (fileStat.isFile()) {
+          newFileStat.isFile = true;
+          newFileStat.format = FileUtil.getFileType(name);
+          newFileStat.size = fileStat.size;
+          fileList.push(newFileStat);
+        } else if (fileStat.isDirectory()) {
+          newFileStat.isFolder = true;
+          newFileStat.format = FILE_TYPE.FOLDER;
+          const childDir = fs.readdirSync(filePath) || [];
+          newFileStat.size = childDir.length;
+          folderList.push(newFileStat);
+        }
+      } catch (e) {
+        logger.warn('[FileService] getFileStat - get file stat:', name);
       }
     });
     fileStatList = [...folderList, ...fileList];
