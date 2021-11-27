@@ -34,7 +34,7 @@ exports.COMMON_PATH = {
   Pictures: '/Pictures',
   Videos: '/Videos',
   Trash_L: '~/.local/share/Trash/',
-  Trash_W: 'C:/Recycled',
-  Computer: ''
+  Trash_W: '/$Recycle.Bin',
+  Computer: '/'
 };
 

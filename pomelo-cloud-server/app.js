@@ -50,4 +50,9 @@ app.use(function(req, res, next) {
   next();
 });
 
+process.on('uncaughtException', function(err, req, res, next) {
+  logger.error('[process] error: ', err);
+  _ctx.send500();
+});
+
 module.exports = app;

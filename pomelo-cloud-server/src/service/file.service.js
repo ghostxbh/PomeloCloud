@@ -3,6 +3,9 @@ const fs = require('fs');
 const os = require('os');
 const AdmZip = require('adm-zip');
 const logger = require('log4js').getLogger();
+const ini = require('ini');
+const xmlParser = require('fast-xml-parser');
+const xmlParseOption = require('../core/config/xml-parse.config');
 const DateUtil = require('../core/utils/date.util');
 const FileUtil = require('../core/utils/file.util');
 const {CommonUtil} = require('../core/utils/common.util');
@@ -38,6 +41,11 @@ class FileService {
     if (options && options.conversionType) {
       switch (options.conversionType) {
         case FILE_TYPE.XML:
+          if (!xmlParser.validate(fileBuffer)) {
+            logger.error('[FileService] readFile - toXml fail');
+            fileData = '';
+          }
+          fileData = xmlParser.parse(fileBuffer, xmlParseOption);
           break;
         case FILE_TYPE.JSON:
           try {
@@ -50,6 +58,12 @@ class FileService {
           }
           break;
         case FILE_TYPE.INI:
+          try {
+            fileData = ini.parse(fileBuffer);
+          } catch (e) {
+            logger.error('[FileService] readFile - toIni fail');
+            fileData = '';
+          }
           break;
         default:
           fileData = fileBuffer;
@@ -78,6 +92,8 @@ class FileService {
         } else {
           s.link = COMMON_PATH.Trash_W;
         }
+      } else if (key === 'Computer') {
+        s.link = '/';
       } else {
         s.link = SYSTEM_PLATFORM_USER_PATH + COMMON_PATH[key];
       }
