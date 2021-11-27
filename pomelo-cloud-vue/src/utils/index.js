@@ -123,13 +123,20 @@ export function parseFileSize(size) {
   if (isNaN(size)) {
     return '';
   }
+  if (size > 1024 * 1024 * 1024 * 1024) {
+    return (size / (1024 * 1024 * 1024 * 1024)).toFixed(1) + ' TB';
+  }
 
-  if (size > 1048576) {
-    return (size / 1048576).toFixed(2) + ' MB';
+  if (size > 1024 * 1024 * 1024) {
+    return (size / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  }
+
+  if (size > 1024 * 1024) {
+    return (size / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
   if (size > 1024) {
-    return (size / 1024).toFixed(2) + ' KB';
+    return (size / 1024).toFixed(1) + ' KB';
   }
   return size + ' B';
 }
