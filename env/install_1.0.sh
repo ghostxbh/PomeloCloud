@@ -300,8 +300,8 @@ funcInstallPomelo()
 	chmod -R +x ${PANEL_ROOT_PATH}/PomeloCloud/scripts
 	ln -sf /etc/init.d/pomelo /usr/bin/pomelo
 
-	echo "${clientPort}" > ${PANEL_ROOT_PATH}/PomeloCloud/config/client-port.pl
-	echo "${serverPort}" > ${PANEL_ROOT_PATH}/PomeloCloud/config/server-port.pl
+#	echo "${clientPort}" > ${PANEL_ROOT_PATH}/PomeloCloud/config/client-port.pl
+#	echo "${serverPort}" > ${PANEL_ROOT_PATH}/PomeloCloud/config/server-port.pl
 }
 
 funcServiceAdd()
