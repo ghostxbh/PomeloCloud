@@ -10,26 +10,22 @@ const logger = require('log4js').getLogger();
 router.get('/sidebar', function(req, res, next) {
   try {
     const result = FileService.fileSidebar();
-    _ctx.setData(result);
-    _ctx.sendSuccess();
+    return res.json(_ctx.okByData(result));
   } catch (e) {
     logger.error('[FileRouter] sidebar: ', e);
-    _ctx.sendError(e);
+    return res.json(_ctx.error('file sidebar error'));
   }
-  return res.json(_ctx.sendResult());
 });
 
 router.post('/list', function(req, res, next) {
   const {path, page = {pageNo: 1, pageSize: 10}, options} = req.body;
   try {
     const result = FileService.fileList(path, page, options);
-    _ctx.setData(result);
-    _ctx.sendSuccess();
+    return res.json(_ctx.okByData(result));
   } catch (e) {
     logger.error('[FileRouter] list: ', e);
-    _ctx.sendError(e);
+    return res.json(_ctx.error('file list error'));
   }
-  return res.json(_ctx.sendResult());
 });
 
 module.exports = router;

@@ -50,9 +50,11 @@ app.use(function(req, res, next) {
   next();
 });
 
-process.on('uncaughtException', function(err, req, res, next) {
+// unkown error, to exit process
+process.on('uncaughtException', function(err) {
   logger.error('[process] error: ', err);
-  _ctx.send500();
+  // 可使用cluster，进行进程退出重启
+  // process.exit(1);
 });
 
 module.exports = app;
