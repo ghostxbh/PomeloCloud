@@ -1,12 +1,11 @@
 'use strict';
+const ini = require('ini');
+const fs = require('fs');
 
 /**
  * code by PomeloCloud
  * 网络业务类
  */
-const ini = require('ini');
-const fs = require('fs');
-
 class NetworkService {
   static init() {
     let nework = fs.readFileSync(__dirname + '/data/network.data.ini', 'utf8');
