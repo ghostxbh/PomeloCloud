@@ -1,11 +1,10 @@
 'use strict';
+const fs = require('fs');
 
 /**
  * code by PomeloCloud
  * 日志工具类
  */
-const fs = require('fs');
-
 class LoggerUtil {
   static isRunInDocker() {
     return !!process.env.ISDOCKER;

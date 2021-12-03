@@ -1,11 +1,11 @@
 'use strict';
+const moment = require('moment');
+const {DATE_FORMAT, MOMENT_DATE_FORMAT} = require('../../domain/constants/date.constant');
+
 /**
  * code by PomeloCloud
  * 日期工具类
  */
-const moment = require('moment');
-const {DATE_FORMAT, MOMENT_DATE_FORMAT} = require('../../domain/constants/date.constant');
-
 module.exports = {
   /**
    * 获取当前日期
@@ -60,6 +60,12 @@ module.exports = {
     return Date.now();
   },
 
+  /**
+   * 解析日期格式
+   * @param time 时间
+   * @param cFormat 格式
+   * @return {string|null}
+   */
   parseDateTime(time, cFormat) {
     if (arguments.length === 0 || !time) {
       return null;

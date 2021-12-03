@@ -1,9 +1,4 @@
 'use strict';
-/**
- * code by PomeloCloud
- * 日志配置类
- */
-
 const log4js = require('log4js');
 const LoggerUtil = require('./logger.util');
 const {
@@ -17,6 +12,10 @@ const pattern = LoggerUtil.isRunInDocker() ? LoggerPattern : LoggerPatternWithCo
 const level = LoggerUtil.getLevelFromEnv() || 'debug';
 const appenders = LoggerUtil.getAppendersFromEnv() || Appenders;
 
+/**
+ * code by PomeloCloud
+ * 日志配置类
+ */
 class LoggerConfig {
   static init(filename) {
     log4js.configure({

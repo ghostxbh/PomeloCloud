@@ -1,40 +1,12 @@
 'use strict';
+const fs = require('fs');
+const {FILE_TYPE} = require('../../domain/constants/file.constant');
+
 /**
  * code by PomeloCloud
  * 文件工具类
  */
-const fs = require('fs');
-const {FILE_TYPE} = require('../../domain/constants/file.constant');
-
 const FileUtil = {
-  /**
-   * 获取JSON文件数据
-   * @param path 路径
-   * @param names 文件名数组
-   * @returns {*[]|any} 数据集合
-   */
-  getJsonFileData(path = '', names = []) {
-    const result = [];
-    if (path && names.length > 0) {
-      names.forEach(name => result.push(this.readFile(path + name)));
-    } else if (path) {
-      return this.readFile(path);
-    }
-    return result;
-  },
-  getFileData(path) {
-    return path ? fs.readFileSync(path).toString() : null;
-  },
-  checkFile(file) {
-    if (typeof file === 'object') {
-      for (const key in file) {
-        file[key] = this.checkPath(file[key]);
-      }
-    } else if (typeof file === 'string') {
-      file = this.checkPath(file);
-    }
-    return file;
-  },
   parseFileSize(size) {
     size = parseInt(size, 10);
     if (isNaN(size)) {

@@ -1,12 +1,12 @@
 'use strict';
-/**
- * code by PomeloCloud
- * 网络中间件
- */
 const logger = require('log4js').getLogger();
 const NetworkService = require('./network.service');
 const NetworkUtil = require('./network.util');
 
+/**
+ * code by PomeloCloud
+ * 网络中间件
+ */
 exports.use = function(app) {
   app.use((req, res, next) => {
     const ip = NetworkUtil.replacePrefix(req.ip);
@@ -15,7 +15,7 @@ exports.use = function(app) {
       const blackIp = blackIpList[i];
       if (blackIp === ip) {
         logger.warn('[Black IP request] %s', ip);
-        return res.json(_ctx.send500());
+        return res.json(_ctx.error());
       }
     }
     next();

@@ -11,24 +11,21 @@ router.post('/login', function(req, res, next) {
   const {username, password, code} = req.body;
   try {
     const token = LoginService.login(username, password, req);
-    _ctx.setData({token});
-    _ctx.sendSuccess();
+    return res.json(_ctx.okByData({token}));
   } catch (e) {
     logger.error('[LoginRouter] login: ', e);
-    _ctx.sendError(e);
+    return res.json(_ctx.error('login error'));
   }
-  return res.json(_ctx.sendResult());
 });
 
 router.post('/logout', function(req, res, next) {
   try {
     LoginService.logout(req);
-    _ctx.sendSuccess();
+    return res.json(_ctx.ok());
   } catch (e) {
     logger.error('[LoginRouter] logout: ', e);
-    _ctx.sendError(e);
+    return res.json(_ctx.error('logout error'));
   }
-  return res.json(_ctx.sendResult());
 });
 
 module.exports = router;

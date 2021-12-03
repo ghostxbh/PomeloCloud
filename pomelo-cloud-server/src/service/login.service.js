@@ -3,7 +3,7 @@ const FileService = require('./file.service');
 const ServiceException = require('../core/exception/service.exception');
 const DateUtil = require('../core/utils/date.util');
 const {UserErrorCode} = require('../core/exception/biz-code');
-const GlobleCache = require('../core/extend/cache/globle.chache');
+const GlobleCache = require('../core/extend/globle-cache');
 const {
   CUSTOM_FILE_PATH,
   CUSTOM_OPERATION_FILE,

@@ -1,10 +1,10 @@
 'use strict';
+const multer = require('multer');
+
 /**
  * code by PomeloCloud
  * 文件上传解析配置
  */
-const multer = require('multer');
-
 class MulterConfig {
   static storage() {
     return multer.diskStorage({
