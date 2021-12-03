@@ -1,15 +1,15 @@
 'use strict';
+const ip = require('ip');
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
+const logger = require('log4js').getLogger();
+const NetworkService = require('./network.service');
 
 /**
  * code by PomeloCloud
  * 网络工具类
  */
-const ip = require('ip');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
-const NetworkService = require('./network.service');
-
 class NetworkUtil {
   /**
    * 替换前缀
@@ -18,7 +18,7 @@ class NetworkUtil {
    * @returns {*|string}
    */
   static replacePrefix(ip) {
-    return ip.indexOf('::ffff:') > -1 ? ip.replace(/::ffff:/, '') : '-';
+    return ip.indexOf('::ffff:') > -1 ? ip.replace(/::ffff:/g, '') : '-';
   }
 
   /**
@@ -97,7 +97,7 @@ class NetworkUtil {
         return true;
       }
     } catch (e) {
-      console.error('创建目录失败', dirname);
+      logger.error('create dir error', dirname);
       return false;
     }
   }

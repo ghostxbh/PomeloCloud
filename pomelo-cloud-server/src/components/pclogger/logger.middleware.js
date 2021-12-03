@@ -1,12 +1,12 @@
 'use strict';
-/**
- * code by PomeloCloud
- * 日志中间件
- */
 const querystring = require('querystring');
 const uuid = require('uuid');
 const logger = require('./logger.config').logger();
 
+/**
+ * code by PomeloCloud
+ * 日志中间件
+ */
 module.exports = ((req, res, next) => {
   const traceId = uuid.v4();
   req.traceId = traceId;
