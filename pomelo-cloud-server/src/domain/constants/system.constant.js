@@ -23,7 +23,7 @@ exports.SYSTEM_PLATFORM_USER_PATH = homedir.indexOf('\\') > -1 ? homedir.replace
 
 /**
  * 公共路径
- * @type {{DESKTOP: string, DOCUMENTS: string, DOWNLOADS: string, Trash_L: string, Trash_W: string, HOME: string}}
+ * @type {{DESKTOP: string, DOCUMENTS: string, DOWNLOADS: string, Trash: string, HOME: string}}
  */
 exports.COMMON_PATH = {
   Home: '',
@@ -33,8 +33,7 @@ exports.COMMON_PATH = {
   Music: '/Music',
   Pictures: '/Pictures',
   Videos: '/Videos',
-  Trash_L: '~/.local/share/Trash/',
-  Trash_W: '/$Recycle.Bin',
-  Computer: '/'
+  Trash: '/web/Recycle.Bin',
+  Computer: '/',
 };
 
