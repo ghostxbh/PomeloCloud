@@ -12,6 +12,7 @@ var logger = require('log4js').getLogger();
 const {init} = require('./src/components/pclogger/logger.config');
 const req_parse = require('./src/core/middleware/req-parse.middleware');
 const network = require('./src/components/pcnetwork/network.middleware');
+const SystemService = require('./src/service/system.service');
 const Context = require('./src/core/extend/context');
 const multerConfig = require('./src/core/config/multer.config');
 const upload = require('multer')({storage: multerConfig.storage});
@@ -42,6 +43,9 @@ app.use(cors());
 
 // router
 app.use(require('./src/router'));
+
+// get device info
+// SystemService.getSystemInformatica().then();
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
