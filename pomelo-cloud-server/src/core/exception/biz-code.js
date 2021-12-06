@@ -18,6 +18,11 @@ exports.BizErrorCode = {
     message: 'read file error',
     message_cn: '读取文件错误',
   },
+  file_format_error: {
+    code: 417,
+    message: 'file format error',
+    message_cn: '文件格式错误',
+  },
 };
 
 exports.UserErrorCode = {

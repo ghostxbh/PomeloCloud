@@ -21,6 +21,7 @@ exports.FILE_TYPE = {
   XML: 'xml',
   JSON: 'json',
   TEXT: 'text',
+  YAML: 'yaml',
 
   SWF: 'swf',
   PDF: 'pdf',
@@ -86,9 +87,10 @@ function PCRootPath() {
  * 自定义路径
  */
 exports.CUSTOM_FILE_PATH = {
-  ENV_DIR: PCRootPath() + '/environment/',
+  ENV_DIR: PCRootPath() + '/env/',
   CONFIG_DIR: PCRootPath() + '/config/',
   FILE_DEFAULT_PATH: '/',
+  TRASH_PATH: 'D:/$GC_BIN/',
 };
 
 exports.CUSTOM_OPERATION_FILE = {
@@ -97,10 +99,15 @@ exports.CUSTOM_OPERATION_FILE = {
   CLIENT_PORT: 'client-port.pl',
   SERVER_PORT: 'server-port.pl',
 
+  DEVICE: 'device.json',
   FILE_CONFIG: 'default.json',
 };
 
 exports.FILE_ENCODING = {
   utf8: 'utf8',
   gbk: 'gbk',
+};
+
+exports.HEADER_INFORMATIO = {
+  XML: '<?xml version="1.0" encoding="UTF-8"?>\n',
 };

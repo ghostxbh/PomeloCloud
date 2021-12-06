@@ -1,10 +1,11 @@
 'use strict';
 const fs = require('fs');
 const os = require('os');
-const AdmZip = require('adm-zip');
-const logger = require('log4js').getLogger();
 const ini = require('ini');
+const yaml = require('yaml');
+const admZip = require('adm-zip');
 const xmlParser = require('fast-xml-parser');
+const logger = require('log4js').getLogger();
 const xmlParseOption = require('../core/config/xml-parse.config');
 const DateUtil = require('../core/utils/date.util');
 const FileUtil = require('../core/utils/file.util');
@@ -22,6 +23,7 @@ const {
   FILE_TYPE,
   FILE_ENCODING,
   CUSTOM_FILE_PATH,
+  HEADER_INFORMATIO,
   CUSTOM_OPERATION_FILE,
 } = require('../domain/constants/file.constant');
 
@@ -30,6 +32,13 @@ const {
  * 文件业务类
  */
 class FileService {
+  /**
+   * 读取文件
+   * @param {string} name 文件名
+   * @param {string} path 文件路径
+   * @param {*} options 选项
+   * @return {*} 文件内容
+   */
   static readFile(name, path, options) {
     let fileData;
     let filePath = path + name;
@@ -65,6 +74,14 @@ class FileService {
             fileData = '';
           }
           break;
+        case FILE_TYPE.YAML:
+          try {
+            fileData = yaml.parse(fileBuffer);
+          } catch (e) {
+            logger.error('[FileService] readFile - toYaml fail');
+            fileData = '';
+          }
+          break;
         default:
           fileData = fileBuffer;
           break;
@@ -73,6 +90,51 @@ class FileService {
       fileData = fileBuffer.trim();
     }
     return fileData;
+  }
+
+  /**
+   * 保存文件
+   * @param {string} name 文件名
+   * @param {*} body 文件内容
+   * @param {string} path 文件路径
+   * @param {*} options 选项
+   * @return {number} 是否成功
+   */
+  static saveFile(name, body, path, options) {
+    let fileBuffer = body;
+    let filePath = name ? path + name : path;
+
+    if (options && options.conversionType) {
+      try {
+        switch (options.conversionType) {
+          case FILE_TYPE.XML:
+            const xParser = xmlParser.j2xParser;
+            const parser = new xParser(xmlParseOption);
+            let xml = parser.parse(fileBuffer);
+            fileBuffer = options.useHeader ? HEADER_INFORMATIO.XML + xml : fileBuffer;
+            fileBuffer = options.useAnnotation ? `<!-- ${ options.annotation } --> \\n${ fileBuffer }` : fileBuffer;
+            break;
+          case FILE_TYPE.JSON:
+            if (typeof fileBuffer === 'object') {
+              fileBuffer = JSON.stringify(fileBuffer);
+            }
+            break;
+          case FILE_TYPE.INI:
+            fileBuffer = ini.parse(fileBuffer);
+            fileBuffer = options.useAnnotation ? `;${ options.annotation }\\n${ fileBuffer }` : fileBuffer;
+            break;
+          case FILE_TYPE.YAML:
+            fileBuffer = yaml.parse(fileBuffer);
+            fileBuffer = options.useAnnotation ? `#${ options.annotation }\\n${ fileBuffer }` : fileBuffer;
+            break;
+        }
+      } catch (e) {
+        logger.error('[FileService] readFile - format fail');
+        throw ServiceException.of(BizErrorCode.file_format_error);
+      }
+    }
+    fs.writeFileSync(filePath, fileBuffer);
+    return 1;
   }
 
   /**
@@ -85,15 +147,18 @@ class FileService {
     // 根据不通系统获取文件流
     sidebar.forEach(s => {
       const key = s.title;
-      if (key === 'Trash') {
+      if (key === 'Computer') {
         const platform = os.platform().toLowerCase();
         if (platform === SYSTEM_PLATFORM_ENV.OS || platform === SYSTEM_PLATFORM_ENV.LINUX) {
-          s.link = COMMON_PATH.Trash_L;
+          s.link = '/';
         } else {
-          s.link = COMMON_PATH.Trash_W;
+          const {disk = []} = this.readFile(CUSTOM_OPERATION_FILE.DEVICE, CUSTOM_FILE_PATH.CONFIG_DIR + 'system/', {conversionType: FILE_TYPE.JSON});
+          const links = [];
+          disk.forEach(d => links.push({name: d.name, size: FileUtil.parseFileSize(d.size), path: d.mount}));
+          s.link = links;
         }
-      } else if (key === 'Computer') {
-        s.link = '/';
+      } else if (key === 'Trash') {
+        s.link = CUSTOM_FILE_PATH.TRASH_PATH;
       } else {
         s.link = SYSTEM_PLATFORM_USER_PATH + COMMON_PATH[key];
       }
@@ -141,6 +206,37 @@ class FileService {
     return result;
   }
 
+  static createFile(type, name, path) {
+    const filePath = path + '/' + name;
+    if (type === FILE_TYPE.FILE) {
+      fs.writeFileSync(filePath, '');
+    } else if (FILE_TYPE.FOLDER) {
+      fs.mkdirSync(filePath, '755');
+    }
+  }
+
+  static deleteFile(name, path) {
+    path = FileUtil.checkFilePath(path);
+    const filePath = path + name;
+    // TODO 检查是否系统或者重要的目录及文件
+    fs.renameSync(filePath, CUSTOM_FILE_PATH.TRASH_PATH);
+    return 1;
+  }
+
+  static renameFile(newName, oldName, path) {
+    path = FileUtil.checkFilePath(path);
+    const newFilePath = path + newName;
+    const oldFilePath = path + oldName;
+    fs.renameSync(oldFilePath, newFilePath);
+    return 1;
+  }
+
+  /**
+   *
+   * @param fileNames {string[]}文件名数组
+   * @param path {string} 路径
+   * @return {string[]} 可访问文件名数组
+   */
   static accessFile(fileNames = [], path) {
     const hasAccessFileNames = [];
     fileNames.forEach(name => {
@@ -312,7 +408,7 @@ const FileCommon = {
    * @param {string} name 文件名称
    */
   compressionToZip(files, path, name) {
-    const zip = new ADMZIP();
+    const zip = new admZip();
     files.forEach((file) => {
       if (file.isFile()) {
         zip.addLocalFile(path + file.name);
