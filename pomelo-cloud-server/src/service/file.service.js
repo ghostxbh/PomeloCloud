@@ -218,6 +218,7 @@ class FileService {
   static deleteFile(name, path) {
     path = FileUtil.checkFilePath(path);
     const filePath = path + name;
+    // TODO 检查是否系统或者重要的目录及文件
     fs.renameSync(filePath, CUSTOM_FILE_PATH.TRASH_PATH);
     return 1;
   }
