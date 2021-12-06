@@ -14,3 +14,27 @@ export function sidebar() {
     method: 'get',
   });
 }
+
+export function create(type, data) {
+  return request({
+    url: '/file/create?type=' + type,
+    method: 'post',
+    data: data,
+  });
+}
+
+export function remove(data) {
+  return request({
+    url: '/file/remove',
+    method: 'delete',
+    data: data,
+  });
+}
+
+export function rename(data) {
+  return request({
+    url: '/file/rename',
+    method: 'post',
+    data: data,
+  });
+}
