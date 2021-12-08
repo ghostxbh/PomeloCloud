@@ -3,7 +3,11 @@ const si = require('systeminformation');
 const logger = require('log4js').getLogger();
 const FileService = require('./file.service');
 const FileUtils = require('../core/utils/file.util');
-const {FILE_TYPE, CUSTOM_FILE_PATH} = require('../domain/constants/file.constant');
+const {
+  FILE_TYPE,
+  CUSTOM_FILE_PATH,
+  CUSTOM_OPERATION_FILE,
+} = require('../domain/constants/file.constant');
 
 /**
  * code by PomeloCloud
@@ -26,6 +30,11 @@ class SystemService {
     } catch (e) {
       logger.error('[SystemService] save device error', e);
     }
+  }
+
+  static systemInfo() {
+    const device = FileService.readFile(CUSTOM_OPERATION_FILE.DEVICE, CUSTOM_FILE_PATH.CONFIG_DIR + 'system/', {conversionType: FILE_TYPE.JSON});
+    return device;
   }
 }
 
