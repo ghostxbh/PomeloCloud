@@ -38,3 +38,28 @@ export function rename(data) {
     data: data,
   });
 }
+
+export function copy(data) {
+  return request({
+    url: '/file/copy',
+    method: 'post',
+    data: data,
+  });
+}
+
+export function cut(data) {
+  return request({
+    url: '/file/cut',
+    method: 'post',
+    data: data,
+  });
+}
+
+
+export function paste(data) {
+  return request({
+    url: '/file/paste',
+    method: 'post',
+    data: data,
+  });
+}
