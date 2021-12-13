@@ -62,4 +62,37 @@ router.post('/rename', function(req, res, next) {
     return res.json(_ctx.error('file rename error'));
   }
 });
+
+router.post('/copy', function(req, res, next) {
+  const {name, path} = req.body;
+  try {
+    const token = FileService.copyFile(name, path);
+    return res.json(_ctx.okByData(token));
+  } catch (e) {
+    logger.error('[FileRouter] copy: ', e);
+    return res.json(_ctx.error('file copy error'));
+  }
+});
+
+router.post('/cut', function(req, res, next) {
+  const {name, path} = req.body;
+  try {
+    const token = FileService.cutFile(name, path);
+    return res.json(_ctx.okByData(token));
+  } catch (e) {
+    logger.error('[FileRouter] cut: ', e);
+    return res.json(_ctx.error('file cut error'));
+  }
+});
+
+router.post('/paste', function(req, res, next) {
+  const {token, path} = req.body;
+  try {
+    FileService.pasteFile(token, path);
+    return res.json(_ctx.ok());
+  } catch (e) {
+    logger.error('[FileRouter] paste: ', e);
+    return res.json(_ctx.error('file paste error'));
+  }
+});
 module.exports = router;

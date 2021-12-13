@@ -9,6 +9,7 @@ const logger = require('log4js').getLogger();
 const xmlParseOption = require('../core/config/xml-parse.config');
 const DateUtil = require('../core/utils/date.util');
 const FileUtil = require('../core/utils/file.util');
+const GlobleCache = require('../core/extend/globle-cache');
 const {CommonUtil} = require('../core/utils/common.util');
 const {BizErrorCode} = require('../core/exception/biz-code');
 const ServiceException = require('../core/exception/service.exception');
@@ -41,7 +42,7 @@ class FileService {
    */
   static readFile(name, path, options) {
     let fileData;
-    let filePath = path + name;
+    let filePath = name ? path + name : path;
     filePath = filePath.indexOf('\\') > -1 ? filePath.replace(/\\/g, '/') : filePath;
     if (!fs.existsSync(filePath)) {
       throw ServiceException.of(BizErrorCode.not_found_file);
@@ -223,11 +224,50 @@ class FileService {
     return 1;
   }
 
-  static renameFile(newName, oldName, path) {
+  static copyFile(name, path) {
     path = FileUtil.checkFilePath(path);
-    const newFilePath = path + newName;
-    const oldFilePath = path + oldName;
-    fs.renameSync(oldFilePath, newFilePath);
+    const filePath = path + name;
+    const [fileStat] = this.getFileStat([name], path);
+    const obj = {
+      path: filePath,
+      name,
+      isFile: fileStat.isFile || false,
+      isFolder: fileStat.isFolder || false,
+      timestamp: DateUtil.getCurrentTimeStamp(),
+      type: 'copy',
+    };
+    const token = GlobleCache.set(obj);
+    return token;
+  }
+
+  static cutFile(name, path) {
+    let filePath = path + name;
+    filePath = FileUtil.checkFilePath(filePath);
+    let newPath = CUSTOM_FILE_PATH.TRASH_PATH + name;
+    newPath = FileUtil.checkFilePath(newPath);
+    const [fileStat] = this.getFileStat([name], path);
+    const obj = {
+      path: newPath,
+      name,
+      isFile: fileStat.isFile || false,
+      isFolder: fileStat.isFolder || false,
+      timestamp: DateUtil.getCurrentTimeStamp(),
+      type: 'cut',
+    };
+    const token = GlobleCache.set(obj);
+    fs.renameSync(filePath, newPath);
+    return token;
+  }
+
+  static pasteFile(token, path) {
+    path = FileUtil.checkFilePath(path, {hasCreating: true});
+    const obj = GlobleCache.get(token);
+    if (obj.type === 'copy') {
+      fs.cpSync(obj.path, path + obj.name);
+    } else if (obj.type === 'cut') {
+      fs.renameSync(obj.path, path + obj.name);
+    }
+    GlobleCache.remove(token);
     return 1;
   }
 

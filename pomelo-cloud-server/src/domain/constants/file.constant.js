@@ -89,6 +89,7 @@ function PCRootPath() {
 exports.CUSTOM_FILE_PATH = {
   ENV_DIR: PCRootPath() + '/env/',
   CONFIG_DIR: PCRootPath() + '/config/',
+  TMP_DIR: process.cwd() + '/tmp/',
   FILE_DEFAULT_PATH: '/',
   TRASH_PATH: 'D:/$GC_BIN/',
 };

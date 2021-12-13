@@ -105,22 +105,34 @@ const FileUtil = {
               fs.mkdirSync(item.path);
             }
           } catch (e) {
-            logger.error('[FileUtil] create (%f) error:', item.path, e);
+            logger.error('[FileUtil] - checkFilePath: create (%f) error:', item.path, e);
           }
         }
       }
 
       // 如果该路径是文件夹，自动补全文件夹后的/，方便后续业务逻辑拼接路径
-      const stats = fs.statSync(path);
-      if (stats.isDirectory()) {
-        const lastChar = path.substring(path.length - 1, path.length);
-        if (lastChar !== '/') {
-          path += '/';
+      try {
+        const stats = fs.statSync(path);
+        if (stats && stats.isDirectory()) {
+          const lastChar = path.substring(path.length - 1, path.length);
+          if (lastChar !== '/') {
+            path += '/';
+          }
         }
+      } catch (e) {
+        logger.error('[FileUtil] - checkFilePath: get stat error', e);
       }
       return path;
     }
     return false;
+  },
+  checkFileType(filePath) {
+    if (!fs.existsSync(filePath)) {
+      logger.warn('[FileUtil] - checkFileType: path is not exists');
+      return false;
+    }
+    const stats = fs.statSync(filePath);
+    return stats && stats.isFile() ? 'file' : 'folder';
   },
   getFileType(fileName) {
     if (fileName.indexOf('.') > -1) {
@@ -130,7 +142,6 @@ const FileUtil = {
     }
     return FILE_TYPE.FILE;
   },
-
   spawn(...args) {
     return new Promise(resolve => {
       const proc = spawn(...args);
