@@ -220,7 +220,21 @@ class FileService {
     path = FileUtil.checkFilePath(path);
     const filePath = path + name;
     // TODO 检查是否系统或者重要的目录及文件
-    fs.renameSync(filePath, CUSTOM_FILE_PATH.TRASH_PATH);
+    // fs.renameSync(filePath, CUSTOM_FILE_PATH.TRASH_PATH);
+    const [fileStat] = this.getFileStat([name], path);
+    if (fileStat.isFile) {
+      fs.unlinkSync(filePath);
+    } else if (fileStat.isFolder) {
+      fs.rmdirSync(filePath);
+    }
+    return 1;
+  }
+
+  static renameFile(newName, oldName, path) {
+    path = FileUtil.checkFilePath(path);
+    const newFilePath = path + newName;
+    const oldFilePath = path + oldName;
+    fs.renameSync(oldFilePath, newFilePath);
     return 1;
   }
 
@@ -260,10 +274,13 @@ class FileService {
   }
 
   static pasteFile(token, path) {
+    if (!token) {
+      return 0;
+    }
     path = FileUtil.checkFilePath(path, {hasCreating: true});
     const obj = GlobleCache.get(token);
     if (obj.type === 'copy') {
-      fs.cpSync(obj.path, path + obj.name);
+      fs.copyFileSync(obj.path, path + obj.name, fs.constants.COPYFILE_EXCL);
     } else if (obj.type === 'cut') {
       fs.renameSync(obj.path, path + obj.name);
     }

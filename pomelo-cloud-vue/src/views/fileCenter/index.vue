@@ -432,6 +432,7 @@ export default {
       create(this.createModel.type, data).then(res => {
         notice({message: '创建成功'});
         this.openCreateDialog = false;
+        this.createModel.name = '';
         this.getFileList();
       }).catch(e => {
         console.log(e);
@@ -484,7 +485,12 @@ export default {
 
     pasteFile() {
       paste({token: this.pasteToken, path: this.condition.path})
-        .then(res => notice({message: '粘贴成功'}))
+        .then(res => {
+          if (res.data) {
+            notice({message: '粘贴成功'});
+          }
+          this.pasteToken = '';
+        })
         .catch(e => notice({message: '粘贴异常', type: 'error'}));
       this.getFileList();
     },

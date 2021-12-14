@@ -88,8 +88,8 @@ router.post('/cut', function(req, res, next) {
 router.post('/paste', function(req, res, next) {
   const {token, path} = req.body;
   try {
-    FileService.pasteFile(token, path);
-    return res.json(_ctx.ok());
+    const pasteFile = FileService.pasteFile(token, path);
+    return res.json(_ctx.okByData(pasteFile));
   } catch (e) {
     logger.error('[FileRouter] paste: ', e);
     return res.json(_ctx.error('file paste error'));
