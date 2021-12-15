@@ -14,24 +14,8 @@ class ConversionType {
         case DataModelType.BOOL:
           result = value === 'true';
           break;
-        case DataModelType.INT32:
+        case DataModelType.INT:
           result = parseInt(value);
-          break;
-        case DataModelType.VECTOR_BOOL:
-          if (value.indexOf(',') > -1) {
-            const array = [];
-            const split = value.split(',') || [];
-            split.forEach(s => array.push(s === 'true'));
-            result = array;
-          }
-          break;
-        case DataModelType.VECTOR_DOUBLE:
-          if (value.indexOf(',') > -1) {
-            const array = [];
-            const split = value.split(',') || [];
-            split.forEach(s => array.push(s));
-            result = array;
-          }
           break;
         default:
           result = value;
