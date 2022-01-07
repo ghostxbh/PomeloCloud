@@ -1,0 +1,61 @@
+{
+  "title": "fileCenter",
+  "sidebar": [
+    {
+      "title": "Home",
+      "icon": "el-icon-s-home",
+      "link": "",
+      "sort": 1
+    },
+    {
+      "title": "Desktop",
+      "icon": "el-icon-s-platform",
+      "link": "",
+      "sort": 2
+    },
+    {
+      "title": "Documents",
+      "icon": "el-icon-document",
+      "link": "",
+      "sort": 3
+    },
+    {
+      "title": "Downloads",
+      "icon": "el-icon-download",
+      "link": "",
+      "sort": 4
+    },
+    {
+      "title": "Music",
+      "icon": "el-icon-headset",
+      "link": "",
+      "sort": 5
+    },
+    {
+      "title": "Pictures",
+      "icon": "el-icon-camera-solid",
+      "link": "",
+      "sort": 6
+    },
+    {
+      "title": "Videos",
+      "icon": "el-icon-video-camera-solid",
+      "link": "",
+      "sort": 7
+    },
+    {
+      "title": "Trash",
+      "icon": "el-icon-delete",
+      "link": "",
+      "sort": 8,
+      "hasHr": true
+    },
+    {
+      "title": "Computer",
+      "icon": "el-icon-coin",
+      "link": "",
+      "sort": 9,
+      "hasHr": true
+    }
+  ]
+}
